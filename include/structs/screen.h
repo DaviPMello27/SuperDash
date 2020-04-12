@@ -6,9 +6,14 @@ struct Size {
 	int h;
 };
 
+struct Scale {
+	float w;
+	float h;
+};
+
 struct Screen {
 	Size size;
-	Size scale;
+	Scale scale;
 };
 
 #endif

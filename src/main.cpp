@@ -19,44 +19,18 @@
 Screen setWindowSize(int w, int h){ //TODO: put this in the Screen struct
 	return {
 		{w, h},
-		{w/800, h/800}
+		{w/800.0f, h/600.0f}
 	};
 }
 
-void eventHandler(Player &player){ //TODO: get this out of main.cpp
+void eventHandler(Player &player, Player &player2){ //TODO: get this out of main.cpp
 	SDL_Event event;
 	while(SDL_PollEvent(&event)){
+		player.respondToKey(event);
+		player2.respondToKey(event);
 		switch(event.type){
 		case SDL_QUIT:
 			dashSystem.running = false;
-			break;
-		}
-		switch(event.type){
-		case SDL_KEYDOWN:
-			switch(event.key.keysym.sym){
-			case SDLK_d:
-				player.keys.right = true;
-				break;
-			case SDLK_a:
-				player.keys.left = true;
-				break;
-			case SDLK_w:
-				player.keys.up = true;
-				break;
-			}
-			break;
-		case SDL_KEYUP:
-			switch(event.key.keysym.sym){
-			case SDLK_d:
-				player.keys.right = false;
-				break;
-			case SDLK_a:
-				player.keys.left = false;
-				break;
-			case SDLK_w:
-				player.keys.up = false;
-				break;
-			}
 			break;
 		}
 	}
@@ -101,16 +75,26 @@ int main(){
 
 	//player declaration (temporary)
 	Player player;
+	player.character = &dashCharacterOlavo;
 	player.pos = {100, 520};
 	player.speed = {0, 0};
 	player.keys = {0, 0, 0, 0};
-	player.state = STATE_WALKING;
+	player.state = State::WALKING;
+	player.keyCodes = {SDLK_a, SDLK_w, SDLK_d, SDLK_s};
+
+	Player player2;
+	player2.character = &dashCharacterOlavo;
+	player2.pos = {700, 520};
+	player2.speed = {0, 0};
+	player2.keys = {0, 0, 0, 0};
+	player2.state = State::WALKING;
+	player2.keyCodes = {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN};
 
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
 	while(dashSystem.running){ //almost everything in the loop is temporary
 		//testing
-		eventHandler(player);
+		eventHandler(player, player2);
 
 		//clear
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 1);
@@ -121,16 +105,20 @@ int main(){
 
 		//move player
 		player.move();
+		player2.move();
 
-		std::cout << "y: " << player.pos.y << ", ";
+		//std::cout << "y: " << player.pos.y << ", ";
 		//std::cout << "sy: " << player.speed.y << ", ";
-		std::cout << "x: " << player.pos.x << ", ";
-		std::cout << "sx: " << player.speed.x << ", ";
-		std::cout << "st: " << player.state << ";\n";
+		//std::cout << "x: " << player.pos.x << ", ";
+		//std::cout << "sx: " << player.speed.x << ", \n";
 
 		//draw player
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
 		SDL_Rect charac = {player.pos.x, player.pos.y, 20, 50};
+		SDL_RenderFillRect(renderer, &charac);
+
+		SDL_SetRenderDrawColor(renderer, 0, 128, 255, 1);
+		charac = {player2.pos.x, player2.pos.y, 20, 50};
 		SDL_RenderFillRect(renderer, &charac);
 
 		//draw

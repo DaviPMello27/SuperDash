@@ -3,6 +3,14 @@
 
 #include "structs/character.h"
 
-const Character characters[8]; //TODO: implement character data
+const Character dashCharacterOlavo = {
+	"olavo",
+	{
+		2,
+		3,
+		3,
+		2
+	},
+}; //TODO: implement character data, turn into array
 
 #endif
