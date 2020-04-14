@@ -74,21 +74,8 @@ int main(){
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
 	//player declaration (temporary)
-	Player player;
-	player.character = &dashCharacterOlavo;
-	player.pos = {100, 520};
-	player.speed = {0, 0};
-	player.keys = {0, 0, 0, 0};
-	player.state = State::WALKING;
-	player.keyCodes = {SDLK_a, SDLK_w, SDLK_d, SDLK_s};
-
-	Player player2;
-	player2.character = &dashCharacterOlavo;
-	player2.pos = {700, 520};
-	player2.speed = {0, 0};
-	player2.keys = {0, 0, 0, 0};
-	player2.state = State::WALKING;
-	player2.keyCodes = {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN};
+	Player player(&dashCharacterOlavo, 100, 520, {SDLK_a, SDLK_w, SDLK_d, SDLK_s});
+	Player player2(&dashCharacterOlavo, 700, 520, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN});
 
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
@@ -104,21 +91,31 @@ int main(){
 		buildMap(renderer, bric);
 
 		//move player
-		player.move();
+		player.control();
 		player2.move();
 
-		//std::cout << "y: " << player.pos.y << ", ";
-		//std::cout << "sy: " << player.speed.y << ", ";
-		//std::cout << "x: " << player.pos.x << ", ";
-		//std::cout << "sx: " << player.speed.x << ", \n";
+		/*if(player.direction == Direction::LEFT){
+			std::cout << "l\n";
+		} else if(player.direction == Direction::UP){
+			std::cout << "u\n";
+		} else if(player.direction == Direction::RIGHT){
+			std::cout << "r\n";
+		} else if(player.direction == Direction::DOWN){
+			std::cout << "d\n";
+		}*/
+
+		std::cout << "y: " << player.pos.y << ", ";
+		std::cout << "sy: " << player.speed.y << ", ";
+		std::cout << "x: " << player.pos.x << ", ";
+		std::cout << "sx: " << player.speed.x << ", \n";
 
 		//draw player
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
-		SDL_Rect charac = {player.pos.x, player.pos.y, 20, 50};
+		SDL_Rect charac = {player.pos.x, player.pos.y, player.size.w, player.size.h};
 		SDL_RenderFillRect(renderer, &charac);
 
 		SDL_SetRenderDrawColor(renderer, 0, 128, 255, 1);
-		charac = {player2.pos.x, player2.pos.y, 20, 50};
+		charac = {player2.pos.x, player2.pos.y, player2.size.w, player2.size.h};
 		SDL_RenderFillRect(renderer, &charac);
 
 		//draw

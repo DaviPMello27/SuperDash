@@ -6,10 +6,10 @@
 const Character dashCharacterOlavo = {
 	"olavo",
 	{
-		2,
-		3,
-		3,
-		2
+		2, //speed
+		3, //dash speed
+		3, //dash recovery
+		2 //jump
 	},
 }; //TODO: implement character data, turn into array
 
