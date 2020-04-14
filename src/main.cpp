@@ -74,8 +74,8 @@ int main(){
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
 	//player declaration (temporary)
-	Player player(&dashCharacterOlavo, 100, 520, {SDLK_a, SDLK_w, SDLK_d, SDLK_s});
-	Player player2(&dashCharacterOlavo, 700, 520, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN});
+	Player player(&dashCharacterOlavo, 100, 520, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
+	Player player2(&dashCharacterOlavo, 700, 520, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p});
 
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
@@ -92,7 +92,7 @@ int main(){
 
 		//move player
 		player.control();
-		player2.move();
+		player2.control();
 
 		/*if(player.direction == Direction::LEFT){
 			std::cout << "l\n";
@@ -104,10 +104,8 @@ int main(){
 			std::cout << "d\n";
 		}*/
 
-		std::cout << "y: " << player.pos.y << ", ";
-		std::cout << "sy: " << player.speed.y << ", ";
-		std::cout << "x: " << player.pos.x << ", ";
-		std::cout << "sx: " << player.speed.x << ", \n";
+		std::cout << player.pos.x << "/" << player.pos.y << ", ";
+		std::cout << player.speed.x << "/" << player.speed.y << "\n";
 
 		//draw player
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
