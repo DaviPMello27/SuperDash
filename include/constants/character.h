@@ -2,8 +2,10 @@
 #define DASHCHARACTERCONSTANTS_H
 
 #include "structs/character.h"
+#include <SDL/SDL.h>
+#include <SDL/SDL_image.h>
 
-const Character dashCharacterOlavo = {
+Character dashCharacterOlavo = {
 	"olavo",
 	{
 		2, //speed

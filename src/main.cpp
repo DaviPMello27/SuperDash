@@ -23,11 +23,10 @@ Screen setWindowSize(int w, int h){ //TODO: put this in the Screen struct
 	};
 }
 
-void eventHandler(Player &player, Player &player2){ //TODO: get this out of main.cpp
+void eventHandler(Player &player){ //TODO: get this out of main.cpp
 	SDL_Event event;
 	while(SDL_PollEvent(&event)){
 		player.respondToKey(event);
-		player2.respondToKey(event);
 		switch(event.type){
 		case SDL_QUIT:
 			dashSystem.running = false;
@@ -73,50 +72,50 @@ int main(){
 	SDL_Window* mainWindow = createMainWindow(screen);
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
-	//player declaration (temporary)
-	Player player(&dashCharacterOlavo, 100, 520, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
-	Player player2(&dashCharacterOlavo, 700, 520, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p});
-
+	Player player(&dashCharacterOlavo, 100, 500, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
+	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
+	int xOffset = 0;
+	int animationCounter = 0;
+	int animationVariation = 24;
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
-	while(dashSystem.running){ //almost everything in the loop is temporary
-		//testing
-		eventHandler(player, player2);
+	while(dashSystem.running){
+		eventHandler(player);
 
-		//clear
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 1);
 		SDL_RenderClear(renderer);
 
-		//build map
 		buildMap(renderer, bric);
 
-		//move player
 		player.control();
-		player2.control();
-
-		/*if(player.direction == Direction::LEFT){
-			std::cout << "l\n";
-		} else if(player.direction == Direction::UP){
-			std::cout << "u\n";
-		} else if(player.direction == Direction::RIGHT){
-			std::cout << "r\n";
-		} else if(player.direction == Direction::DOWN){
-			std::cout << "d\n";
-		}*/
-
 		std::cout << player.pos.x << "/" << player.pos.y << ", ";
 		std::cout << player.speed.x << "/" << player.speed.y << "\n";
 
-		//draw player
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
 		SDL_Rect charac = {player.pos.x, player.pos.y, player.size.w, player.size.h};
-		SDL_RenderFillRect(renderer, &charac);
+		SDL_Rect characSrc = {xOffset, 0, 24, 38};
+		if(player.keys.right || player.keys.left){
+			animationCounter++;
+			if(animationCounter % 9 == 0){
+				xOffset += animationVariation;
+			}
+			if(xOffset == 96){
+				animationVariation = -24;
+			} else if(xOffset == 24){
+				animationVariation = 24;
+			}
+		} else {
+			animationCounter = 0;
+			xOffset = 0;
+			animationVariation = 24;
+		}
 
-		SDL_SetRenderDrawColor(renderer, 0, 128, 255, 1);
-		charac = {player2.pos.x, player2.pos.y, player2.size.w, player2.size.h};
-		SDL_RenderFillRect(renderer, &charac);
+		if(player.keys.left){
+			SDL_RenderCopyEx(renderer, player.character->sprite, &characSrc, &charac, 0, {0}, SDL_FLIP_HORIZONTAL);
+		} else {
+			SDL_RenderCopyEx(renderer, player.character->sprite, &characSrc, &charac, 0, {0}, SDL_FLIP_NONE);
+		}
 
-		//draw
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1000/120);
 	}

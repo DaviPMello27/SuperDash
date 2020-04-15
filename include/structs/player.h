@@ -40,7 +40,7 @@ struct Speed {
 };
 
 struct Player {
-	const Character* character;
+	Character* character;
 	Direction direction;
 	Speed speed;
 	State state;
@@ -54,7 +54,7 @@ struct Player {
 	int health;
 	int team;
 
-	Player(const Character* character, int x, int y, KeyCodes codes){
+	Player(Character* character, int x, int y, KeyCodes codes){
 		this->character = character;
 		this->direction = (x < 300) ? Direction::RIGHT : Direction::LEFT;
 		this->speed = {0, 0};
@@ -62,7 +62,7 @@ struct Player {
 		this->keys = {0, 0, 0, 0};
 		this->keyCodes = codes;
 		this->pos = {x, y};
-		this->size = {20, 50};
+		this->size = {48, 76};
 		this->canJump = true;
 		this->canDash = true;
 		this->dashCooldown = 0;
@@ -193,7 +193,7 @@ struct Player {
 		if(!dashCooldown){
 			state = State::MIDAIR;
 			dashCooldown = (6 - character->stat.recoveryTime) * 30;
-			size.h = 50;
+			size.h = 76;
 			speed = {0, 0};
 		}
 
@@ -247,7 +247,7 @@ struct Player {
 					if(keys.left || keys.up || keys.right || keys.down){
 						state = State::DASHING;
 						dashCooldown = 30;
-						size.h = 20;
+						size.h = 48;
 						speed = {0, 0};
 						if(keys.left){
 							direction = Direction::LEFT;
