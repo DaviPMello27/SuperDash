@@ -16,6 +16,13 @@
 #include "constants/constants.h"
 #include "globals/globals.h"
 
+namespace debug {
+	void printPos(Player player){
+		std::cout << player.pos.x << "/" << player.pos.y << ", ";
+		std::cout << player.speed.x << "/" << player.speed.y << "\n";
+	}
+};
+
 Screen setWindowSize(int w, int h){ //TODO: put this in the Screen struct
 	return {
 		{w, h},
@@ -23,10 +30,11 @@ Screen setWindowSize(int w, int h){ //TODO: put this in the Screen struct
 	};
 }
 
-void eventHandler(Player &player){ //TODO: get this out of main.cpp
+void eventHandler(Player* players){ //TODO: get this out of main.cpp
 	SDL_Event event;
 	while(SDL_PollEvent(&event)){
-		player.respondToKey(event);
+		players[0].respondToKey(event);
+		players[1].respondToKey(event);
 		switch(event.type){
 		case SDL_QUIT:
 			dashSystem.running = false;
@@ -66,13 +74,64 @@ SDL_Renderer* createRenderer(SDL_Window* window){
 	);
 }
 
+Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
+	int xDif = a.x - b.x;
+	int yDif = a.y - b.y;
+	if(abs(xDif) > abs(yDif)){
+		if(xDif < 0){
+			return Direction::RIGHT;
+		} else {
+			return Direction::LEFT;
+		}
+	} else {
+		if(yDif < 0){
+			return Direction::UP;
+		} else {
+			return Direction::DOWN;
+		}
+	}
+
+}
+
+void solvePlayerCollisions(Player* players){
+	for(int i = 0; i < 2; i++){
+		for(int j = 0; j < 2; j++){
+			if(players[i].pos.x != players[j].pos.x || players[i].pos.y != players[j].pos.y){
+				if(tools::collide(players[i].dst, players[j].dst)){
+					Direction dir = getCollisionDirection(players[i].dst, players[j].dst);
+					if(dir == Direction::RIGHT && players[i].keys.right){
+						players[i].pos.x -= players[i].speed.x;
+						players[i].speed.x = 0;
+					}
+					if(dir == Direction::LEFT && players[i].keys.left){
+						players[i].pos.x -= players[i].speed.x;
+						players[i].speed.x = 0;
+					}
+					if(dir == Direction::UP && players[i].speed.y > 0){
+						players[i].pos.y = players[j].pos.y - 76;
+						players[i].speed.y = -10;
+					}
+					if(dir == Direction::DOWN && players[i].speed.y < 0){
+						players[i].speed.y = 0;
+					}
+				}
+			}
+		}
+	}
+}
+
 int main(){
 	Screen screen = setWindowSize(800, 600); //TODO: implement file reading
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_Window* mainWindow = createMainWindow(screen);
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
-	Player player(&dashCharacterOlavo, 100, 450, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
+	Player players[] = {
+		Player(&dashCharacterOlavo, 100, 450, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
+		Player(&dashCharacterOlavo, 600, 450, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
+	};
+
+	
 	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
 	int xOffset = 0;
 	int animationCounter = 0;
@@ -80,25 +139,25 @@ int main(){
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
 	while(dashSystem.running){
-		eventHandler(player);
+		eventHandler(players);
 
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 1);
 		SDL_RenderClear(renderer);
-
 		buildMap(renderer, bric);
+		
+		
+		players[0].control();
+		players[1].control();
 
-		player.control();
-		//std::cout << player.pos.x << "/" << player.pos.y << ", ";
-		//std::cout << player.speed.x << "/" << player.speed.y << "\n";
+		solvePlayerCollisions(players);
 
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
-		SDL_Rect charac = {player.pos.x, player.pos.y, player.size.w, player.size.h};
-
-		if(player.direction == Direction::LEFT){
-			SDL_RenderCopyEx(renderer, player.character->sprite, &player.animation.src, &charac, 0, {0}, SDL_FLIP_HORIZONTAL);
-		} else {
-			SDL_RenderCopyEx(renderer, player.character->sprite, &player.animation.src, &charac, 0, {0}, SDL_FLIP_NONE);
-		}
+		//debug::printPos(players[0]);
+		SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
+		SDL_RenderFillRect(renderer, &players[0].dst);
+		SDL_RenderFillRect(renderer, &players[1].dst);
+		
+		players[0].draw(renderer);
+		players[1].draw(renderer);
 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1000/120);

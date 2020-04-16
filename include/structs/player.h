@@ -4,73 +4,16 @@
 #include <SDL/SDL.h>
 #include "screen.h"
 #include "constants/map.h" //temporary until we build the maps using the Map struct
+#include "player_components.h"
 
-struct DirectionKeys {
-	bool left;
-	bool up;
-	bool right;
-	bool down;
-};
-
-struct KeyCodes {
-	SDL_Keycode left;
-	SDL_Keycode up;
-	SDL_Keycode right;
-	SDL_Keycode down;
-	SDL_Keycode dash;
-};
-
-enum class Direction{
-	LEFT,
-	UP,
-	RIGHT,
-	DOWN,
-};
-
-enum class State {
-	WALKING,
-	DASHING,
-	MIDAIR,
-	DEFEATED,
-};
-
-struct Speed {
-	float x;
-	float y;
-};
-
-struct Animation {
-	int counter;
-	int offset;
-	SDL_Rect src;
-
-	void walk(bool condition, int limit, int variation){
-		src = {offset, 0, 24, 38};
-		if(condition){
-			counter++;
-			if(counter % 10 == 0){
-				offset += variation;
-			}
-			if(offset == limit){
-				offset = variation;
-			}
-		} else {
-			counter = 0;
-			offset = 0;
+namespace tools {
+	bool collide(SDL_Rect first, SDL_Rect second){
+		if(first.x + first.w > second.x && first.x < second.x + second.w && first.y < second.y + second.h && first.y + first.h > second.y){
+			return true;
 		}
+		return false;
 	}
-
-	void jump(int ySpeed, int limit, int variation){
-		if(ySpeed < -1.5){
-			offset = 168;
-		} else if(ySpeed >= -1.5 && ySpeed < 1.5){
-			offset = 192;
-		} else {
-			offset = 216;
-		}
-		src = {offset, 0, 24, 38};
-	}
-};
+}
 
 struct Player {
 	Character* character;
@@ -81,6 +24,7 @@ struct Player {
 	DirectionKeys keys;
 	KeyCodes keyCodes;
 	SDL_Point pos;
+	SDL_Rect dst; //TODO: organize
 	Size size;
 	bool canJump = true;
 	bool canDash = true;
@@ -98,6 +42,7 @@ struct Player {
 		this->keyCodes = codes;
 		this->pos = {x, y};
 		this->size = {48, 76};
+		this->dst = {pos.x, pos.y, size.w, size.h};
 		this->canJump = true;
 		this->canDash = true;
 		this->dashCooldown = 0;
@@ -203,8 +148,6 @@ struct Player {
 			if(speed.x < maxSpeed){
 				speed.x++;
 			}
-			pos.x += static_cast<int>(speed.x);
-			collideRight();
 		} else if(speed.x > 0){
 			speed.x = 0;
 		}
@@ -215,11 +158,12 @@ struct Player {
 			if(speed.x > -maxSpeed){
 				speed.x--;
 			}
-			pos.x += static_cast<int>(speed.x);
-			collideLeft();
 		} else if(speed.x < 0){
 			speed.x = 0;
 		}
+		pos.x += static_cast<int>(speed.x);
+		collideLeft();
+		collideRight();
 
 		//==========LANDING==========//
 		if(state == State::WALKING &&
@@ -272,7 +216,14 @@ struct Player {
 		}
 	}
 
-	
+	void draw(SDL_Renderer* renderer){
+		dst = {pos.x, pos.y, size.w, size.h};
+		if(direction == Direction::LEFT){
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &dst, 0, {0}, SDL_FLIP_HORIZONTAL);
+		} else {
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &dst, 0, {0}, SDL_FLIP_NONE);
+		}
+	}
 
 	void respondToKey(SDL_Event event){
 		SDL_Keycode key = event.key.keysym.sym;
