@@ -13,6 +13,24 @@ namespace tools {
 		}
 		return false;
 	}
+
+	Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
+		int xDif = a.x - b.x;
+		int yDif = a.y - b.y;
+		if(abs(xDif) > abs(yDif)){
+			if(xDif < 0){
+				return Direction::RIGHT;
+			} else {
+				return Direction::LEFT;
+			}
+		} else {
+			if(yDif < 0){
+				return Direction::UP;
+			} else {
+				return Direction::DOWN;
+			}
+		}
+	}
 }
 
 struct Player {
@@ -24,7 +42,6 @@ struct Player {
 	DirectionKeys keys;
 	KeyCodes keyCodes;
 	SDL_Point pos;
-	SDL_Rect dst; //TODO: organize
 	Size size;
 	bool canJump = true;
 	bool canDash = true;
@@ -34,7 +51,6 @@ struct Player {
 
 	Player(Character* character, int x, int y, KeyCodes codes){
 		this->character = character;
-		this->animation = {0, 0, {animation.offset, 0, 24, 38}};
 		this->direction = (x < 300) ? Direction::RIGHT : Direction::LEFT;
 		this->speed = {0, 0};
 		this->state = State::WALKING;
@@ -42,7 +58,7 @@ struct Player {
 		this->keyCodes = codes;
 		this->pos = {x, y};
 		this->size = {48, 76};
-		this->dst = {pos.x, pos.y, size.w, size.h};
+		this->animation = {0, 0, {animation.offset, 0, 24, 38}, {pos.x, pos.y, size.w, size.h}};
 		this->canJump = true;
 		this->canDash = true;
 		this->dashCooldown = 0;
@@ -50,16 +66,34 @@ struct Player {
 		this->team = 0;
 	}
 
-	void control(){
-		if(dashCooldown){dashCooldown--;}
-		if(state != State::DASHING){
-			move();
-			if(state == State::MIDAIR)
-				animation.jump(speed.y, 192, 24);
-			else
-				animation.walk((keys.right || keys.left), 168, 24);
-		} else if(state == State::DASHING){
-			dash();
+private:
+	void applyXSpeed(){
+		if(abs(speed.x) > 10){
+			for(int i = 0; i < 2; i++){
+				std::cout << "CHECKIN HARD\n";
+				pos.x += static_cast<int>(speed.x) / 2;
+				collideLeft();
+				collideRight();
+			}
+		} else {
+			pos.x += static_cast<int>(speed.x);
+			collideLeft();
+			collideRight();
+		}
+	}
+	
+	void applyYSpeed(){
+		if(abs(speed.y) > 10){
+			for(int i = 0; i < 2; i++){
+				std::cout << "CHECKIN HARD\n";
+				pos.y += static_cast<int>(speed.y) / 2;
+				collideLeft();
+				collideRight();
+			}
+		} else {
+			pos.y += static_cast<int>(speed.y);
+			collideLeft();
+			collideRight();
 		}
 	}
 
@@ -136,7 +170,7 @@ struct Player {
 				speed.y += 0.5;
 			}
 			speed.y += 1.0f / 3;
-			pos.y += static_cast<int>(speed.y);
+			applyYSpeed();
 			if(speed.y > 0) canJump = false;	
 			collideUp();
 			collideDown();
@@ -149,7 +183,7 @@ struct Player {
 				speed.x++;
 			}
 		} else if(speed.x > 0){
-			speed.x = 0;
+			speed.x -= 0.5;
 		}
 
 		//==========LEFT==========//
@@ -159,9 +193,9 @@ struct Player {
 				speed.x--;
 			}
 		} else if(speed.x < 0){
-			speed.x = 0;
+			speed.x += 0.5;
 		}
-		pos.x += static_cast<int>(speed.x);
+		applyXSpeed();
 		collideLeft();
 		collideRight();
 
@@ -216,12 +250,47 @@ struct Player {
 		}
 	}
 
+public:
+	void control(){
+		if(dashCooldown){dashCooldown--;}
+		if(state != State::DASHING){
+			move();
+			if(state == State::MIDAIR)
+				animation.jump(speed.y, 192, 24);
+			else
+				animation.walk((keys.right || keys.left), 168, 24);
+		} else if(state == State::DASHING){
+			dash();
+		}
+	}
+
+	void collidePlayers(Player* players){
+		for(int i = 0; i < 2; i++){
+			if(pos.x != players[i].pos.x || pos.y != players[i].pos.y){
+				if(tools::collide(animation.dst, players[i].animation.dst)){
+					Direction dir = tools::getCollisionDirection(animation.dst, players[i].animation.dst);
+					if((dir == Direction::RIGHT && keys.right) || 
+					   (dir == Direction::LEFT && keys.left)){
+						pos.x -= static_cast<int>(speed.x);
+						speed.x = 0;
+					} else if(dir == Direction::UP && speed.y > 0){
+						pos.y = players[i].pos.y - 76;
+						speed.y = -10.0f;
+						speed.x = (pos.x - players[i].pos.x) / 5.0f;
+					} else if(dir == Direction::DOWN && speed.y < 0){
+						speed.y = 0;
+					}
+				}
+			}
+		}
+	}
+
 	void draw(SDL_Renderer* renderer){
-		dst = {pos.x, pos.y, size.w, size.h};
+		animation.dst = {pos.x, pos.y, size.w, size.h};
 		if(direction == Direction::LEFT){
-			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &dst, 0, {0}, SDL_FLIP_HORIZONTAL);
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 0, {0}, SDL_FLIP_HORIZONTAL);
 		} else {
-			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &dst, 0, {0}, SDL_FLIP_NONE);
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 0, {0}, SDL_FLIP_NONE);
 		}
 	}
 

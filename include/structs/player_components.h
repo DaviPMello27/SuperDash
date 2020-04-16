@@ -41,6 +41,7 @@ struct Animation {
 	int counter;
 	int offset;
 	SDL_Rect src;
+	SDL_Rect dst;
 
 	void walk(bool condition, int limit, int variation){
 		src = {offset, 0, 24, 38};
@@ -58,7 +59,7 @@ struct Animation {
 		}
 	}
 
-	void jump(int ySpeed, int limit, int variation){
+	void jump(float ySpeed, int limit, int variation){
 		if(ySpeed < -1.5){
 			offset = 168;
 		} else if(ySpeed >= -1.5 && ySpeed < 1.5){

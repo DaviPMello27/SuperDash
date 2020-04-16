@@ -74,52 +74,6 @@ SDL_Renderer* createRenderer(SDL_Window* window){
 	);
 }
 
-Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
-	int xDif = a.x - b.x;
-	int yDif = a.y - b.y;
-	if(abs(xDif) > abs(yDif)){
-		if(xDif < 0){
-			return Direction::RIGHT;
-		} else {
-			return Direction::LEFT;
-		}
-	} else {
-		if(yDif < 0){
-			return Direction::UP;
-		} else {
-			return Direction::DOWN;
-		}
-	}
-
-}
-
-void solvePlayerCollisions(Player* players){
-	for(int i = 0; i < 2; i++){
-		for(int j = 0; j < 2; j++){
-			if(players[i].pos.x != players[j].pos.x || players[i].pos.y != players[j].pos.y){
-				if(tools::collide(players[i].dst, players[j].dst)){
-					Direction dir = getCollisionDirection(players[i].dst, players[j].dst);
-					if(dir == Direction::RIGHT && players[i].keys.right){
-						players[i].pos.x -= players[i].speed.x;
-						players[i].speed.x = 0;
-					}
-					if(dir == Direction::LEFT && players[i].keys.left){
-						players[i].pos.x -= players[i].speed.x;
-						players[i].speed.x = 0;
-					}
-					if(dir == Direction::UP && players[i].speed.y > 0){
-						players[i].pos.y = players[j].pos.y - 76;
-						players[i].speed.y = -10;
-					}
-					if(dir == Direction::DOWN && players[i].speed.y < 0){
-						players[i].speed.y = 0;
-					}
-				}
-			}
-		}
-	}
-}
-
 int main(){
 	Screen screen = setWindowSize(800, 600); //TODO: implement file reading
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -149,12 +103,13 @@ int main(){
 		players[0].control();
 		players[1].control();
 
-		solvePlayerCollisions(players);
+		players[0].collidePlayers(players);
+		players[1].collidePlayers(players);
 
-		//debug::printPos(players[0]);
+		debug::printPos(players[0]);
 		SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
-		SDL_RenderFillRect(renderer, &players[0].dst);
-		SDL_RenderFillRect(renderer, &players[1].dst);
+		SDL_RenderFillRect(renderer, &players[0].animation.dst);
+		SDL_RenderFillRect(renderer, &players[1].animation.dst);	
 		
 		players[0].draw(renderer);
 		players[1].draw(renderer);
