@@ -39,8 +39,42 @@ struct Speed {
 	float y;
 };
 
+struct Animation {
+	int counter;
+	int offset;
+	SDL_Rect src;
+
+	void walk(bool condition, int limit, int variation){
+		src = {offset, 0, 24, 38};
+		if(condition){
+			counter++;
+			if(counter % 10 == 0){
+				offset += variation;
+			}
+			if(offset == limit){
+				offset = variation;
+			}
+		} else {
+			counter = 0;
+			offset = 0;
+		}
+	}
+
+	void jump(int ySpeed, int limit, int variation){
+		if(ySpeed < -1.5){
+			offset = 168;
+		} else if(ySpeed >= -1.5 && ySpeed < 1.5){
+			offset = 192;
+		} else {
+			offset = 216;
+		}
+		src = {offset, 0, 24, 38};
+	}
+};
+
 struct Player {
 	Character* character;
+	Animation animation;
 	Direction direction;
 	Speed speed;
 	State state;
@@ -56,6 +90,7 @@ struct Player {
 
 	Player(Character* character, int x, int y, KeyCodes codes){
 		this->character = character;
+		this->animation = {0, 0, {animation.offset, 0, 24, 38}};
 		this->direction = (x < 300) ? Direction::RIGHT : Direction::LEFT;
 		this->speed = {0, 0};
 		this->state = State::WALKING;
@@ -74,6 +109,10 @@ struct Player {
 		if(dashCooldown){dashCooldown--;}
 		if(state != State::DASHING){
 			move();
+			if(state == State::MIDAIR)
+				animation.jump(speed.y, 192, 24);
+			else
+				animation.walk((keys.right || keys.left), 168, 24);
 		} else if(state == State::DASHING){
 			dash();
 		}
@@ -91,10 +130,12 @@ struct Player {
 	}
 
 	void collideDown(){
-		if(map1[(pos.y + size.h) / 30][(pos.x) / 40] == 1 ||                       //bottom left
-			map1[(pos.y + size.h) / 30][(pos.x + size.w - 1) / 40] == 1){          //bottom right
+		if(speed.y > 0 && 
+		   (map1[(pos.y + size.h) / 30][(pos.x) / 40] == 1 ||                       //bottom left
+			map1[(pos.y + size.h) / 30][(pos.x + size.w - 1) / 40] == 1)){          //bottom right
 			pos.y -= (pos.y + size.h) % 30; //set position to the top of the block
 			speed.y = 0;
+			animation.offset = 0;
 			if(state == State::DASHING){
 				pos.y -= 30;
 				dashCooldown = 0;
@@ -231,19 +272,23 @@ struct Player {
 		}
 	}
 
+	
+
 	void respondToKey(SDL_Event event){
 		SDL_Keycode key = event.key.keysym.sym;
 		switch(event.type){
 			case SDL_KEYDOWN:
-				if(key == keyCodes.right)
+				if(key == keyCodes.right){
 					keys.right = true;
-				else if(key == keyCodes.left)
+					direction = Direction::RIGHT;
+				} else if(key == keyCodes.left){
 					keys.left = true;
-				else if(key == keyCodes.up)
+					direction = Direction::LEFT;
+				} else if(key == keyCodes.up){
 					keys.up = true;
-				else if(key == keyCodes.down)
+				} else if(key == keyCodes.down){
 					keys.down = true;
-				else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
+				} else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
 					if(keys.left || keys.up || keys.right || keys.down){
 						state = State::DASHING;
 						dashCooldown = 30;

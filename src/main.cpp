@@ -72,7 +72,7 @@ int main(){
 	SDL_Window* mainWindow = createMainWindow(screen);
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
-	Player player(&dashCharacterOlavo, 100, 500, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
+	Player player(&dashCharacterOlavo, 100, 450, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE});
 	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
 	int xOffset = 0;
 	int animationCounter = 0;
@@ -88,32 +88,16 @@ int main(){
 		buildMap(renderer, bric);
 
 		player.control();
-		std::cout << player.pos.x << "/" << player.pos.y << ", ";
-		std::cout << player.speed.x << "/" << player.speed.y << "\n";
+		//std::cout << player.pos.x << "/" << player.pos.y << ", ";
+		//std::cout << player.speed.x << "/" << player.speed.y << "\n";
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
 		SDL_Rect charac = {player.pos.x, player.pos.y, player.size.w, player.size.h};
-		SDL_Rect characSrc = {xOffset, 0, 24, 38};
-		if(player.keys.right || player.keys.left){
-			animationCounter++;
-			if(animationCounter % 9 == 0){
-				xOffset += animationVariation;
-			}
-			if(xOffset == 96){
-				animationVariation = -24;
-			} else if(xOffset == 24){
-				animationVariation = 24;
-			}
-		} else {
-			animationCounter = 0;
-			xOffset = 0;
-			animationVariation = 24;
-		}
 
-		if(player.keys.left){
-			SDL_RenderCopyEx(renderer, player.character->sprite, &characSrc, &charac, 0, {0}, SDL_FLIP_HORIZONTAL);
+		if(player.direction == Direction::LEFT){
+			SDL_RenderCopyEx(renderer, player.character->sprite, &player.animation.src, &charac, 0, {0}, SDL_FLIP_HORIZONTAL);
 		} else {
-			SDL_RenderCopyEx(renderer, player.character->sprite, &characSrc, &charac, 0, {0}, SDL_FLIP_NONE);
+			SDL_RenderCopyEx(renderer, player.character->sprite, &player.animation.src, &charac, 0, {0}, SDL_FLIP_NONE);
 		}
 
 		SDL_RenderPresent(renderer);
