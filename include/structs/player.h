@@ -17,7 +17,7 @@ namespace tools {
 	Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
 		int xDif = a.x - b.x;
 		int yDif = a.y - b.y;
-		if(abs(xDif) > abs(yDif)){
+		if(abs(xDif) + a.h > abs(yDif) + a.w){
 			if(xDif < 0){
 				return Direction::RIGHT;
 			} else {
@@ -67,10 +67,18 @@ struct Player {
 	}
 
 private:
+	void kill(double killerSpeed, bool knockback = true){
+		state = State::DEFEATED;
+		if(knockback){
+			speed.x = killerSpeed * 1.5;
+			pos.y -= 30;
+			speed.y -= 10;
+		}
+	}
+
 	void applyXSpeed(){
 		if(abs(speed.x) > 10){
 			for(int i = 0; i < 2; i++){
-				std::cout << "CHECKIN HARD\n";
 				pos.x += static_cast<int>(speed.x) / 2;
 				collideLeft();
 				collideRight();
@@ -85,15 +93,14 @@ private:
 	void applyYSpeed(){
 		if(abs(speed.y) > 10){
 			for(int i = 0; i < 2; i++){
-				std::cout << "CHECKIN HARD\n";
 				pos.y += static_cast<int>(speed.y) / 2;
-				collideLeft();
-				collideRight();
+				collideUp();
+				collideDown();
 			}
 		} else {
 			pos.y += static_cast<int>(speed.y);
-			collideLeft();
-			collideRight();
+			collideUp();
+			collideDown();
 		}
 	}
 
@@ -111,7 +118,7 @@ private:
 	void collideDown(){
 		if(speed.y > 0 && 
 		   (map1[(pos.y + size.h) / 30][(pos.x) / 40] == 1 ||                       //bottom left
-			map1[(pos.y + size.h) / 30][(pos.x + size.w - 1) / 40] == 1)){          //bottom right
+			map1[(pos.y + size.h) / 30][(pos.x + size.w) / 40] == 1)){          //bottom right
 			pos.y -= (pos.y + size.h) % 30; //set position to the top of the block
 			speed.y = 0;
 			animation.offset = 0;
@@ -120,7 +127,9 @@ private:
 				dashCooldown = 0;
 				return;
 			}
-			state = State::WALKING;
+			if(state != State::DEFEATED){
+				state = State::WALKING;
+			}
 		}
 	}
 
@@ -141,6 +150,47 @@ private:
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
 			if(state == State::DASHING){dashCooldown = 0;}
+		}
+	}
+
+	void collidePlayerHorizontal(Player &player){
+		if(state == State::DASHING && player.state != State::DASHING){
+			player.kill(this->speed.x);
+		} else {
+			pos.x -= static_cast<int>(speed.x);
+			speed.x = 0;
+		}
+	}
+
+	void collidePlayerUp(Player &player){
+		if(state == State::DASHING && player.state != State::DASHING){
+			player.kill(this->speed.x);
+		} else {
+			pos.y = player.pos.y - 76;
+			speed.y = -10.0f;
+			speed.x = (pos.x - player.pos.x) / 5.0f;
+		}
+	}
+
+	void collidePlayerDown(Player &player){
+		if(state == State::DASHING && player.state != State::DASHING){
+			player.kill(this->speed.x);
+		} else {
+			speed.y = 0;
+		}
+	}
+
+	void checkPlayersCollision(Player &player){
+		if(tools::collide(animation.dst, player.animation.dst)){ //check if colliding
+			Direction dir = tools::getCollisionDirection(animation.dst, player.animation.dst);
+			if((dir == Direction::RIGHT && keys.right) ||
+				(dir == Direction::LEFT && keys.left)){
+				collidePlayerHorizontal(player);
+			} else if(dir == Direction::UP && speed.y > 0){
+				collidePlayerUp(player);
+			} else if(dir == Direction::DOWN && speed.y < 0){
+				collidePlayerDown(player);
+			}
 		}
 	}
 
@@ -165,21 +215,19 @@ private:
 		}
 
 		//==========GRAVITY AND MIDAIR COLLISIONS==========//
-		if(state == State::MIDAIR){
+		if(state == State::MIDAIR || state == State::DEFEATED){
 			if(speed.y < 0 && !keys.up){
 				speed.y += 0.5;
 			}
 			speed.y += 1.0f / 3;
 			applyYSpeed();
 			if(speed.y > 0) canJump = false;	
-			collideUp();
-			collideDown();
 		}
 		
 		//==========RIGHT==========//
 		if(keys.right && !keys.left){
 			//speed increase
-			if(speed.x < maxSpeed){
+			if(speed.x < maxSpeed && state != State::DEFEATED){
 				speed.x++;
 			}
 		} else if(speed.x > 0){
@@ -189,20 +237,18 @@ private:
 		//==========LEFT==========//
 		if(keys.left && !keys.right){
 			//speed increase
-			if(speed.x > -maxSpeed){
+			if(speed.x > -maxSpeed && state != State::DEFEATED){
 				speed.x--;
 			}
 		} else if(speed.x < 0){
 			speed.x += 0.5;
 		}
 		applyXSpeed();
-		collideLeft();
-		collideRight();
 
 		//==========LANDING==========//
 		if(state == State::WALKING &&
 			map1[(pos.y + size.h+1) / 30][(pos.x) / 40] == 0 &&                    //bottom left
-			map1[(pos.y + size.h+1) / 30][(pos.x + 20) / 40] == 0){                //bottom right
+			map1[(pos.y + size.h+1) / 30][(pos.x + size.w) / 40] == 0){                //bottom right
 			state = State::MIDAIR;
 		}
 	}
@@ -256,7 +302,9 @@ public:
 		if(state != State::DASHING){
 			move();
 			if(state == State::MIDAIR)
-				animation.jump(speed.y, 192, 24);
+				animation.jump(speed.y);
+			else if(state == State::DEFEATED)
+				animation.death(speed.y);
 			else
 				animation.walk((keys.right || keys.left), 168, 24);
 		} else if(state == State::DASHING){
@@ -265,21 +313,10 @@ public:
 	}
 
 	void collidePlayers(Player* players){
-		for(int i = 0; i < 2; i++){
-			if(pos.x != players[i].pos.x || pos.y != players[i].pos.y){
-				if(tools::collide(animation.dst, players[i].animation.dst)){
-					Direction dir = tools::getCollisionDirection(animation.dst, players[i].animation.dst);
-					if((dir == Direction::RIGHT && keys.right) || 
-					   (dir == Direction::LEFT && keys.left)){
-						pos.x -= static_cast<int>(speed.x);
-						speed.x = 0;
-					} else if(dir == Direction::UP && speed.y > 0){
-						pos.y = players[i].pos.y - 76;
-						speed.y = -10.0f;
-						speed.x = (pos.x - players[i].pos.x) / 5.0f;
-					} else if(dir == Direction::DOWN && speed.y < 0){
-						speed.y = 0;
-					}
+		for(int i = 0; i < 2; i++){ //check all players
+			if(players[i].state != State::DEFEATED && state != State::DEFEATED){ //check if players are alive
+				if(pos.x != players[i].pos.x || pos.y != players[i].pos.y){ //check if player's not himself
+					checkPlayersCollision(players[i]);
 				}
 			}
 		}
@@ -298,30 +335,32 @@ public:
 		SDL_Keycode key = event.key.keysym.sym;
 		switch(event.type){
 			case SDL_KEYDOWN:
-				if(key == keyCodes.right){
-					keys.right = true;
-					direction = Direction::RIGHT;
-				} else if(key == keyCodes.left){
-					keys.left = true;
-					direction = Direction::LEFT;
-				} else if(key == keyCodes.up){
-					keys.up = true;
-				} else if(key == keyCodes.down){
-					keys.down = true;
-				} else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
-					if(keys.left || keys.up || keys.right || keys.down){
-						state = State::DASHING;
-						dashCooldown = 30;
-						size.h = 48;
-						speed = {0, 0};
-						if(keys.left){
-							direction = Direction::LEFT;
-						} else if(keys.right){
-							direction = Direction::RIGHT;
-						} else if(keys.up){
-							direction = Direction::UP;
-						} else if(keys.down){
-							direction = Direction::DOWN;
+				if(state != State::DEFEATED){
+					if(key == keyCodes.right){
+						keys.right = true;
+						direction = Direction::RIGHT;
+					} else if(key == keyCodes.left){
+						keys.left = true;
+						direction = Direction::LEFT;
+					} else if(key == keyCodes.up){
+						keys.up = true;
+					} else if(key == keyCodes.down){
+						keys.down = true;
+					} else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
+						if(keys.left || keys.up || keys.right || keys.down){
+							state = State::DASHING;
+							dashCooldown = 30;
+							size.h = 48;
+							speed = {0, 0};
+							if(keys.left){
+								direction = Direction::LEFT;
+							} else if(keys.right){
+								direction = Direction::RIGHT;
+							} else if(keys.up){
+								direction = Direction::UP;
+							} else if(keys.down){
+								direction = Direction::DOWN;
+							}
 						}
 					}
 				}

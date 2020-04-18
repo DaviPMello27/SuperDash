@@ -107,9 +107,9 @@ int main(){
 		players[1].collidePlayers(players);
 
 		debug::printPos(players[0]);
-		SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
-		SDL_RenderFillRect(renderer, &players[0].animation.dst);
-		SDL_RenderFillRect(renderer, &players[1].animation.dst);	
+		//SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
+		//SDL_RenderFillRect(renderer, &players[0].animation.dst);
+		//SDL_RenderFillRect(renderer, &players[1].animation.dst);	
 		
 		players[0].draw(renderer);
 		players[1].draw(renderer);

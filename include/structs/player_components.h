@@ -59,13 +59,26 @@ struct Animation {
 		}
 	}
 
-	void jump(float ySpeed, int limit, int variation){
+	void jump(float ySpeed){
 		if(ySpeed < -1.5){
 			offset = 168;
 		} else if(ySpeed >= -1.5 && ySpeed < 1.5){
 			offset = 192;
 		} else {
 			offset = 216;
+		}
+		src = {offset, 0, 24, 38};
+	}
+
+	void death(float ySpeed){
+		if(ySpeed < -1.5){
+			offset = 240;
+		} else if(ySpeed == 0){
+			offset = 312;
+		} else if(ySpeed >= -1.5 && ySpeed < 1.5){
+			offset = 264;
+		} else if (ySpeed >= 1.5){
+			offset = 288;
 		}
 		src = {offset, 0, 24, 38};
 	}
