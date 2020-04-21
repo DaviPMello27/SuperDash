@@ -21,6 +21,15 @@ namespace debug {
 		std::cout << player.pos.x << "/" << player.pos.y << ", ";
 		std::cout << player.speed.x << "/" << player.speed.y << "\n";
 	}
+
+	void drawHitbox(SDL_Renderer* renderer, Player player){
+		if(player.state == State::DASHING){
+			SDL_SetRenderDrawColor(renderer, 128, 0, 0, 1);
+		} else {
+			SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
+		}
+		SDL_RenderFillRect(renderer, &player.animation.dst);
+	}
 };
 
 Screen setWindowSize(int w, int h){ //TODO: put this in the Screen struct
@@ -87,9 +96,6 @@ int main(){
 
 	
 	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
-	int xOffset = 0;
-	int animationCounter = 0;
-	int animationVariation = 24;
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
 	while(dashSystem.running){
@@ -98,22 +104,20 @@ int main(){
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 1);
 		SDL_RenderClear(renderer);
 		buildMap(renderer, bric);
-		
-		
+
 		players[0].control();
 		players[1].control();
 
 		players[0].collidePlayers(players);
 		players[1].collidePlayers(players);
 
-		debug::printPos(players[0]);
-		//SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
-		//SDL_RenderFillRect(renderer, &players[0].animation.dst);
-		//SDL_RenderFillRect(renderer, &players[1].animation.dst);	
+		//debug::printPos(players[0]);
+		debug::drawHitbox(renderer, players[0]);
+		debug::drawHitbox(renderer, players[1]);
 		
 		players[0].draw(renderer);
 		players[1].draw(renderer);
-
+	 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1000/120);
 	}

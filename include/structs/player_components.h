@@ -18,7 +18,7 @@ struct KeyCodes {
 	SDL_Keycode dash;
 };
 
-enum class Direction{
+static enum class Direction{
 	LEFT,
 	UP,
 	RIGHT,
@@ -37,7 +37,17 @@ struct Speed {
 	float y;
 };
 
+enum class AnimationType {
+	STAND,
+	WALK,
+	JUMP,
+	DASH,
+	DEATHFRONT,
+	DEATHBACK,
+};
+
 struct Animation {
+	AnimationType type;
 	int counter;
 	int offset;
 	SDL_Rect src;
@@ -70,15 +80,15 @@ struct Animation {
 		src = {offset, 0, 24, 38};
 	}
 
-	void death(float ySpeed){
+	void death(float ySpeed, int addOffset = 0){
 		if(ySpeed < -1.5){
-			offset = 240;
+			offset = 240 + addOffset;
 		} else if(ySpeed == 0){
-			offset = 312;
+			offset = 312 + addOffset;
 		} else if(ySpeed >= -1.5 && ySpeed < 1.5){
-			offset = 264;
+			offset = 264 + addOffset;
 		} else if (ySpeed >= 1.5){
-			offset = 288;
+			offset = 288 + addOffset;
 		}
 		src = {offset, 0, 24, 38};
 	}

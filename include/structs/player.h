@@ -2,19 +2,21 @@
 #define PLAYERSTRUCTS_H
 
 #include <SDL/SDL.h>
+#include <iostream>
 #include "screen.h"
 #include "constants/map.h" //temporary until we build the maps using the Map struct
 #include "player_components.h"
+#include "structs/character.h"
 
 namespace tools {
-	bool collide(SDL_Rect first, SDL_Rect second){
+	static bool collide(SDL_Rect first, SDL_Rect second){
 		if(first.x + first.w > second.x && first.x < second.x + second.w && first.y < second.y + second.h && first.y + first.h > second.y){
 			return true;
 		}
 		return false;
 	}
 
-	Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
+	static Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
 		int xDif = a.x - b.x;
 		int yDif = a.y - b.y;
 		if(abs(xDif) + a.h > abs(yDif) + a.w){
@@ -58,7 +60,7 @@ struct Player {
 		this->keyCodes = codes;
 		this->pos = {x, y};
 		this->size = {48, 76};
-		this->animation = {0, 0, {animation.offset, 0, 24, 38}, {pos.x, pos.y, size.w, size.h}};
+		this->animation = {AnimationType::WALK, 0, 0, {animation.offset, 0, 24, 38}, {pos.x, pos.y, size.w, size.h}};
 		this->canJump = true;
 		this->canDash = true;
 		this->dashCooldown = 0;
@@ -66,18 +68,23 @@ struct Player {
 		this->team = 0;
 	}
 
-private:
-	void kill(double killerSpeed, bool knockback = true){
+private: 
+	void kill(float killerSpeed, bool knockback = true){
 		state = State::DEFEATED;
+		if((direction == Direction::LEFT && killerSpeed < 0) || (direction == Direction::RIGHT && killerSpeed > 0)){
+			animation.type = AnimationType::DEATHBACK;
+		} else {
+			animation.type = AnimationType::DEATHFRONT;
+		}
 		if(knockback){
-			speed.x = killerSpeed * 1.5;
+			speed.x = killerSpeed * 1.5f;
 			pos.y -= 30;
 			speed.y -= 10;
 		}
 	}
 
 	void applyXSpeed(){
-		if(abs(speed.x) > 10){
+		if(abs(static_cast<int>(speed.x)) > 5){
 			for(int i = 0; i < 2; i++){
 				pos.x += static_cast<int>(speed.x) / 2;
 				collideLeft();
@@ -91,7 +98,7 @@ private:
 	}
 	
 	void applyYSpeed(){
-		if(abs(speed.y) > 10){
+		if(abs(static_cast<int>(speed.y)) > 5){
 			for(int i = 0; i < 2; i++){
 				pos.y += static_cast<int>(speed.y) / 2;
 				collideUp();
@@ -118,7 +125,7 @@ private:
 	void collideDown(){
 		if(speed.y > 0 && 
 		   (map1[(pos.y + size.h) / 30][(pos.x) / 40] == 1 ||                       //bottom left
-			map1[(pos.y + size.h) / 30][(pos.x + size.w) / 40] == 1)){          //bottom right
+			map1[(pos.y + size.h) / 30][(pos.x + size.w - 1) / 40] == 1)){          //bottom right
 			pos.y -= (pos.y + size.h) % 30; //set position to the top of the block
 			speed.y = 0;
 			animation.offset = 0;
@@ -129,6 +136,7 @@ private:
 			}
 			if(state != State::DEFEATED){
 				state = State::WALKING;
+				animation.type = AnimationType::WALK;
 			}
 		}
 	}
@@ -156,6 +164,9 @@ private:
 	void collidePlayerHorizontal(Player &player){
 		if(state == State::DASHING && player.state != State::DASHING){
 			player.kill(this->speed.x);
+		} else if(state == State::DASHING && player.state == State::DASHING){
+			dashCooldown = 0;
+			player.dashCooldown = 0;
 		} else {
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
@@ -163,32 +174,40 @@ private:
 	}
 
 	void collidePlayerUp(Player &player){
-		if(state == State::DASHING && player.state != State::DASHING){
-			player.kill(this->speed.x);
-		} else {
-			pos.y = player.pos.y - 76;
+		if(state != State::DASHING && player.state == State::DASHING){
+			kill(player.speed.x);
+		} else if(state == State::DASHING && player.state == State::DASHING){
+			dashCooldown = 0;
+			player.dashCooldown = 0;
+		} else { 
 			speed.y = -10.0f;
 			speed.x = (pos.x - player.pos.x) / 5.0f;
+			player.dashCooldown = 0;
+			dashCooldown = 0;
 		}
 	}
 
 	void collidePlayerDown(Player &player){
-		if(state == State::DASHING && player.state != State::DASHING){
-			player.kill(this->speed.x);
+		if(state != State::DASHING && player.state == State::DASHING){
+			kill(player.speed.x);
+		} else if(state == State::DASHING && player.state == State::DASHING){
+			dashCooldown = 0;
+			player.dashCooldown = 0;
 		} else {
 			speed.y = 0;
+			player.dashCooldown = 0;
+			dashCooldown = 0;
 		}
 	}
 
 	void checkPlayersCollision(Player &player){
-		if(tools::collide(animation.dst, player.animation.dst)){ //check if colliding
+		if(abs(pos.x - player.pos.x) < size.w && abs(pos.y - player.pos.y) < size.h){ //check if colliding
 			Direction dir = tools::getCollisionDirection(animation.dst, player.animation.dst);
-			if((dir == Direction::RIGHT && keys.right) ||
-				(dir == Direction::LEFT && keys.left)){
+			if((dir == Direction::RIGHT || dir == Direction::LEFT)){
 				collidePlayerHorizontal(player);
-			} else if(dir == Direction::UP && speed.y > 0){
+			} else if(dir == Direction::UP){
 				collidePlayerUp(player);
-			} else if(dir == Direction::DOWN && speed.y < 0){
+			} else if(dir == Direction::DOWN){
 				collidePlayerDown(player);
 			}
 		}
@@ -207,6 +226,7 @@ private:
 			if(state == State::WALKING){
 				pos.y--;
 				state = State::MIDAIR;
+				animation.type = AnimationType::JUMP;
 			}
 			speed.y -= 4 + (0.4f*character->stat.jumpPower);
 			if(speed.y <= - (10 + (0.4f * character->stat.jumpPower))){
@@ -259,7 +279,8 @@ private:
 			state = State::MIDAIR;
 			dashCooldown = (6 - character->stat.recoveryTime) * 30;
 			size.h = 76;
-			speed = {0, 0};
+			//speed = {0, 0};
+			return;
 		}
 
 		if(state == State::DASHING){
@@ -301,14 +322,17 @@ public:
 		if(dashCooldown){dashCooldown--;}
 		if(state != State::DASHING){
 			move();
-			if(state == State::MIDAIR)
-				animation.jump(speed.y);
-			else if(state == State::DEFEATED)
-				animation.death(speed.y);
-			else
-				animation.walk((keys.right || keys.left), 168, 24);
 		} else if(state == State::DASHING){
 			dash();
+		}
+		if(animation.type == AnimationType::WALK){
+			animation.walk((keys.right || keys.left), 168, 24);
+		} else if(animation.type == AnimationType::JUMP){
+			animation.jump(speed.y);
+		} else if(animation.type == AnimationType::DEATHBACK){
+			animation.death(speed.y, 96);
+		} else if(animation.type == AnimationType::DEATHFRONT){
+			animation.death(speed.y);
 		}
 	}
 
