@@ -91,11 +91,12 @@ int main(){
 
 	Player players[] = {
 		Player(&dashCharacterOlavo, 100, 450, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
-		Player(&dashCharacterOlavo, 600, 450, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
+		Player(&dashCharacterWroth, 600, 450, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
 	};
 
 	
 	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
+	dashCharacterWroth.sprite = IMG_LoadTexture(renderer, "assets/wroth.png");
 	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
 	while(dashSystem.running){
@@ -112,9 +113,12 @@ int main(){
 		players[1].collidePlayers(players);
 
 		//debug::printPos(players[0]);
-		debug::drawHitbox(renderer, players[0]);
-		debug::drawHitbox(renderer, players[1]);
+		//debug::printPos(players[1]);
+		//debug::drawHitbox(renderer, players[0]);
+		//debug::drawHitbox(renderer, players[1]);
 		
+		//std::cout << players[0].animation.offset << "\n";
+
 		players[0].draw(renderer);
 		players[1].draw(renderer);
 	 

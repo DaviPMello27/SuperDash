@@ -16,10 +16,10 @@ namespace tools {
 		return false;
 	}
 
-	static Direction getCollisionDirection(SDL_Rect a, SDL_Rect b){
+	static Direction getCollisionDirection(SDL_Point a, SDL_Point b, Size size){
 		int xDif = a.x - b.x;
 		int yDif = a.y - b.y;
-		if(abs(xDif) + a.h > abs(yDif) + a.w){
+		if(abs(xDif) + size.h > abs(yDif) + size.w + 1){
 			if(xDif < 0){
 				return Direction::RIGHT;
 			} else {
@@ -142,9 +142,9 @@ private:
 	}
 
 	void collideRight(){
-		if(map1[pos.y / 30][(pos.x + size.w - 1) / 40] == 1 ||                     //top right  
-			map1[(pos.y + size.h / 2) / 30][(pos.x + size.w - 1) / 40] == 1 ||     //middle right
-			map1[(pos.y + size.h - 1) / 30][(pos.x + size.w - 1) / 40] == 1){      //bottom right
+		if(map1[pos.y / 30][((pos.x + size.w - 1) / 40) % 20] == 1 ||                     //top right  
+			map1[(pos.y + size.h / 2) / 30][((pos.x + size.w - 1) / 40) % 20] == 1 ||     //middle right
+			map1[(pos.y + size.h - 1) / 30][((pos.x + size.w - 1) / 40) % 20] == 1){      //bottom right
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
 			if(state == State::DASHING){dashCooldown = 0;}
@@ -152,9 +152,9 @@ private:
 	}
 
 	void collideLeft(){
-		if(map1[ pos.y    /     30       ][(pos.x) / 40] == 1 ||                                  //top left
-		   map1[(pos.y + size.h / 2) / 30][(pos.x) / 40] == 1 ||                  //middle left
-		   map1[(pos.y + size.h - 1) / 30][(pos.x) / 40] == 1){                   //bottom left
+		if(map1[ pos.y    /     30       ][((pos.x) / 40 + 20) % 20] == 1 ||                                  //top left
+		   map1[(pos.y + size.h / 2) / 30][((pos.x) / 40 + 20) % 20] == 1 ||                  //middle left
+		   map1[(pos.y + size.h - 1) / 30][((pos.x) / 40 + 20) % 20] == 1){                   //bottom left
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
 			if(state == State::DASHING){dashCooldown = 0;}
@@ -202,7 +202,7 @@ private:
 
 	void checkPlayersCollision(Player &player){
 		if(abs(pos.x - player.pos.x) < size.w && abs(pos.y - player.pos.y) < size.h){ //check if colliding
-			Direction dir = tools::getCollisionDirection(animation.dst, player.animation.dst);
+			Direction dir = tools::getCollisionDirection(pos, player.pos, player.size);
 			if((dir == Direction::RIGHT || dir == Direction::LEFT)){
 				collidePlayerHorizontal(player);
 			} else if(dir == Direction::UP){
@@ -270,16 +270,23 @@ private:
 			map1[(pos.y + size.h+1) / 30][(pos.x) / 40] == 0 &&                    //bottom left
 			map1[(pos.y + size.h+1) / 30][(pos.x + size.w) / 40] == 0){                //bottom right
 			state = State::MIDAIR;
+			animation.type = AnimationType::JUMP;
+		}
+
+		if(pos.x > 800){ //solve repetition on dash()
+			pos.x = -size.w;
+		} else if(pos.x < -size.w){
+			pos.x = 800;
 		}
 	}
 
 	void dash(){
 		float maxSpeed = 4.0f + character->stat.dashSpeed;
 		if(!dashCooldown){
+			animation.type = AnimationType::JUMP;
 			state = State::MIDAIR;
 			dashCooldown = (6 - character->stat.recoveryTime) * 30;
 			size.h = 76;
-			//speed = {0, 0};
 			return;
 		}
 
@@ -315,6 +322,12 @@ private:
 				break;
 			}
 		}
+
+		if(pos.x > 800){
+			pos.x = -size.w;
+		} else if(pos.x < -size.w){
+			pos.x = 800;
+		}
 	}
 
 public:
@@ -333,6 +346,8 @@ public:
 			animation.death(speed.y, 96);
 		} else if(animation.type == AnimationType::DEATHFRONT){
 			animation.death(speed.y);
+		} else if(animation.type == AnimationType::DASH){
+			animation.dash(speed.x, 4.0 + character->stat.dashSpeed);
 		}
 	}
 
@@ -346,8 +361,25 @@ public:
 		}
 	}
 
-	void draw(SDL_Renderer* renderer){
-		animation.dst = {pos.x, pos.y, size.w, size.h};
+	void draw(SDL_Renderer* renderer){ //organize this mess
+		if(animation.type == AnimationType::DASH && direction == Direction::RIGHT){
+			animation.dst = {pos.x - 106, pos.y, 144, size.h};
+		} else if(animation.type == AnimationType::DASH && direction == Direction::LEFT){
+			animation.dst = {pos.x, pos.y, 144, size.h};
+		} else if(animation.type == AnimationType::DASH && direction == Direction::UP){
+			animation.dst = {pos.x - size.w, pos.y + size.h, 144, size.h};
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 270, {0}, SDL_FLIP_NONE);
+			animation.dst = {pos.x, pos.y, size.w, 144};
+			return;
+		} else if(animation.type == AnimationType::DASH && direction == Direction::DOWN){
+			animation.dst = {pos.x - size.w, pos.y + size.h, 144, size.h};
+			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 90, {0}, SDL_FLIP_NONE);
+			animation.dst = {pos.x, pos.y, size.w, 144};
+			return;
+		} else {
+			animation.dst = {pos.x, pos.y, size.w, size.h};
+		}
+		
 		if(direction == Direction::LEFT){
 			SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 0, {0}, SDL_FLIP_HORIZONTAL);
 		} else {
@@ -362,17 +394,16 @@ public:
 				if(state != State::DEFEATED){
 					if(key == keyCodes.right){
 						keys.right = true;
-						direction = Direction::RIGHT;
+						if(state != State::DASHING){direction = Direction::RIGHT;}
 					} else if(key == keyCodes.left){
 						keys.left = true;
-						direction = Direction::LEFT;
+						if(state != State::DASHING){direction = Direction::LEFT;}
 					} else if(key == keyCodes.up){
 						keys.up = true;
 					} else if(key == keyCodes.down){
 						keys.down = true;
 					} else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
 						if(keys.left || keys.up || keys.right || keys.down){
-							state = State::DASHING;
 							dashCooldown = 30;
 							size.h = 48;
 							speed = {0, 0};
@@ -385,6 +416,9 @@ public:
 							} else if(keys.down){
 								direction = Direction::DOWN;
 							}
+							animation.type = AnimationType::DASH;
+							animation.counter = 0;
+							state = State::DASHING;
 						}
 					}
 				}

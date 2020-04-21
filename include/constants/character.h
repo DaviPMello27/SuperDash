@@ -15,4 +15,14 @@ Character dashCharacterOlavo = {
 	},
 }; //TODO: implement character data, turn into array
 
+Character dashCharacterWroth = {
+	"wroth",
+{
+	1, //speed
+	5, //dash speed
+	4, //dash recovery
+	1 //jump
+},
+};
+
 #endif

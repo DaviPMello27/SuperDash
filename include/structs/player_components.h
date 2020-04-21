@@ -92,6 +92,18 @@ struct Animation {
 		}
 		src = {offset, 0, 24, 38};
 	}
+
+	void dash(double xSpeed, double maxSpeed){
+		counter++;
+		if(counter < 10){
+			offset = 0;
+		} else if(counter < 20){
+			offset = 72;
+		} else {
+			offset = 144 + 72 * (counter % 2);
+		}
+		src = {offset, 38, 72, 24};
+	}
 };
 
 #endif
