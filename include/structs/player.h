@@ -59,7 +59,7 @@ struct Player {
 		this->keys = {0, 0, 0, 0};
 		this->keyCodes = codes;
 		this->pos = {x, y};
-		this->size = {48, 76};
+		this->size = {36, 57};
 		this->animation = {AnimationType::WALK, 0, 0, {animation.offset, 0, 24, 38}, {pos.x, pos.y, size.w, size.h}};
 		this->canJump = true;
 		this->canDash = true;
@@ -113,8 +113,8 @@ private:
 
 	void collideUp(){
 		if(speed.y < 0 &&                                                          //if character is moving up
-		  (map1[(pos.y) / 30][(pos.x) / 40] == 1 ||                                //if top-left is hitting block
-		   map1[(pos.y) / 30][(pos.x + size.w - 1) / 40] == 1)                     //if top-right is hitting block
+		  (map1.tileData[(pos.y) / 25][(pos.x) / 25] == 1 ||                                //if top-left is hitting block
+		   map1.tileData[(pos.y) / 25][(pos.x + size.w - 1) / 25] == 1)                     //if top-right is hitting block
 		){
 			pos.y += 30 - (pos.y) % 30; //set position to the bottom of the block
 			speed.y = 0;
@@ -124,9 +124,9 @@ private:
 
 	void collideDown(){
 		if(speed.y > 0 && 
-		   (map1[(pos.y + size.h) / 30][(pos.x) / 40] == 1 ||                       //bottom left
-			map1[(pos.y + size.h) / 30][(pos.x + size.w - 1) / 40] == 1)){          //bottom right
-			pos.y -= (pos.y + size.h) % 30; //set position to the top of the block
+		   (map1.tileData[(pos.y + size.h) / 25][(pos.x) / 25] == 1 ||                       //bottom left
+			map1.tileData[(pos.y + size.h) / 25][(pos.x + size.w - 1) / 25] == 1)){          //bottom right
+			pos.y -= (pos.y + size.h) % 25; //set position to the top of the block
 			speed.y = 0;
 			animation.offset = 0;
 			if(state == State::DASHING){
@@ -142,9 +142,9 @@ private:
 	}
 
 	void collideRight(){
-		if(map1[pos.y / 30][((pos.x + size.w - 1) / 40) % 20] == 1 ||                     //top right  
-			map1[(pos.y + size.h / 2) / 30][((pos.x + size.w - 1) / 40) % 20] == 1 ||     //middle right
-			map1[(pos.y + size.h - 1) / 30][((pos.x + size.w - 1) / 40) % 20] == 1){      //bottom right
+		if(map1.tileData[pos.y / 25][((pos.x + size.w - 1) / 25) % 32] == 1 ||                     //top right  
+			map1.tileData[(pos.y + size.h / 2) / 25][((pos.x + size.w - 1) / 25) % 32] == 1 ||     //middle right
+			map1.tileData[(pos.y + size.h - 1) / 25][((pos.x + size.w - 1) / 25) % 32] == 1){      //bottom right
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
 			if(state == State::DASHING){dashCooldown = 0;}
@@ -152,9 +152,9 @@ private:
 	}
 
 	void collideLeft(){
-		if(map1[ pos.y    /     30       ][((pos.x) / 40 + 20) % 20] == 1 ||                                  //top left
-		   map1[(pos.y + size.h / 2) / 30][((pos.x) / 40 + 20) % 20] == 1 ||                  //middle left
-		   map1[(pos.y + size.h - 1) / 30][((pos.x) / 40 + 20) % 20] == 1){                   //bottom left
+		if(map1.tileData[ pos.y    /     25       ][((pos.x) / 25 + 32) % 32] == 1 ||                                  //top left
+		   map1.tileData[(pos.y + size.h / 2) / 25][((pos.x) / 25 + 32) % 32] == 1 ||                  //middle left
+		   map1.tileData[(pos.y + size.h - 1) / 25][((pos.x) / 25 + 32) % 32] == 1){                   //bottom left
 			pos.x -= static_cast<int>(speed.x);
 			speed.x = 0;
 			if(state == State::DASHING){dashCooldown = 0;}
@@ -213,13 +213,23 @@ private:
 		}
 	}
 
-	void move(){
+	void changeDirection(){
+		if(keys.right){
+			direction = Direction::RIGHT;
+		} else if(keys.left){
+			direction = Direction::LEFT;
+		}
+	}
+
+	void move() {
 		float maxSpeed = 2.0f + character->stat.speed;
 		if(state == State::MIDAIR)
 			maxSpeed /= 1.5;
 		
 		if(state == State::WALKING && keys.up == false)
 			canJump = true;
+
+		changeDirection();
 		
 		//==========JUMP==========//
 		if(keys.up && canJump){
@@ -267,8 +277,8 @@ private:
 
 		//==========LANDING==========//
 		if(state == State::WALKING &&
-			map1[(pos.y + size.h+1) / 30][(pos.x) / 40] == 0 &&                    //bottom left
-			map1[(pos.y + size.h+1) / 30][(pos.x + size.w) / 40] == 0){                //bottom right
+			map1.tileData[(pos.y + size.h+1) / 25][(pos.x) / 25] == 0 &&                    //bottom left
+			map1.tileData[(pos.y + size.h+1) / 25][(pos.x + size.w) / 25] == 0){                //bottom right
 			state = State::MIDAIR;
 			animation.type = AnimationType::JUMP;
 		}
@@ -285,8 +295,9 @@ private:
 		if(!dashCooldown){
 			animation.type = AnimationType::JUMP;
 			state = State::MIDAIR;
+			canJump = false;
 			dashCooldown = (6 - character->stat.recoveryTime) * 30;
-			size.h = 76;
+			size.h = 57;
 			return;
 		}
 
@@ -347,7 +358,7 @@ public:
 		} else if(animation.type == AnimationType::DEATHFRONT){
 			animation.death(speed.y);
 		} else if(animation.type == AnimationType::DASH){
-			animation.dash(speed.x, 4.0 + character->stat.dashSpeed);
+			animation.dash(dashCooldown, 4.0 + character->stat.dashSpeed);
 		}
 	}
 
@@ -394,18 +405,16 @@ public:
 				if(state != State::DEFEATED){
 					if(key == keyCodes.right){
 						keys.right = true;
-						if(state != State::DASHING){direction = Direction::RIGHT;}
 					} else if(key == keyCodes.left){
 						keys.left = true;
-						if(state != State::DASHING){direction = Direction::LEFT;}
 					} else if(key == keyCodes.up){
 						keys.up = true;
 					} else if(key == keyCodes.down){
 						keys.down = true;
 					} else if(key == keyCodes.dash && state != State::DASHING && !dashCooldown){
 						if(keys.left || keys.up || keys.right || keys.down){
-							dashCooldown = 30;
-							size.h = 48;
+							dashCooldown = 50;
+							size.h = 38;
 							speed = {0, 0};
 							if(keys.left){
 								direction = Direction::LEFT;

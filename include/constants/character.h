@@ -17,12 +17,12 @@ Character dashCharacterOlavo = {
 
 Character dashCharacterWroth = {
 	"wroth",
-{
-	1, //speed
-	5, //dash speed
-	4, //dash recovery
-	1 //jump
-},
+	{
+		1, //speed
+		5, //dash speed
+		4, //dash recovery
+		1 //jump
+	},
 };
 
 #endif

@@ -15,11 +15,24 @@
 #include "structs/headers.h"
 #include "constants/constants.h"
 #include "globals/globals.h"
+#include "structs/decal.h"
 
 namespace debug {
 	void printPos(Player player){
 		std::cout << player.pos.x << "/" << player.pos.y << ", ";
 		std::cout << player.speed.x << "/" << player.speed.y << "\n";
+	}
+
+	void printDirection(Player player){
+		if(player.direction == Direction::LEFT){
+			std::cout << "left\n";
+		} else if(player.direction == Direction::UP){
+			std::cout << "up\n";
+		} else if(player.direction == Direction::RIGHT){
+			std::cout << "right\n";
+		} else {
+			std::cout << "down\n";
+		}
 	}
 
 	void drawHitbox(SDL_Renderer* renderer, Player player){
@@ -52,18 +65,6 @@ void eventHandler(Player* players){ //TODO: get this out of main.cpp
 	}
 }
 
-
-void buildMap(SDL_Renderer* renderer, SDL_Texture* texture){ //TODO: put this in Map struct
-	for(int y = 0; y < 600; y += 30){
-		for(int x = 0; x < 800; x += 40){
-			if(map1[y / 30][x / 40] == 1){
-				SDL_Rect brick = {x, y, 40, 30};
-				SDL_RenderCopy(renderer, texture, nullptr, &brick);
-			}
-		}
-	}
-}
-
 SDL_Window* createMainWindow(Screen screen){
 	return SDL_CreateWindow(
 		"Super Dash",
@@ -90,21 +91,22 @@ int main(){
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 
 	Player players[] = {
-		Player(&dashCharacterOlavo, 100, 450, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
-		Player(&dashCharacterWroth, 600, 450, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
+		Player(&dashCharacterOlavo, 100, 400, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
+		Player(&dashCharacterWroth, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
 	};
 
+	map1.theme.tileSpriteSheet = IMG_LoadTexture(renderer, "assets/brick.png");
 	
 	dashCharacterOlavo.sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
 	dashCharacterWroth.sprite = IMG_LoadTexture(renderer, "assets/wroth.png");
-	SDL_Texture* bric = IMG_LoadTexture(renderer, "assets/brick.png"); //temporary
 	
 	while(dashSystem.running){
 		eventHandler(players);
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 1);
+		SDL_SetRenderDrawColor(renderer, 128, 128, 150, 1);
 		SDL_RenderClear(renderer);
-		buildMap(renderer, bric);
+
+		map1.build(renderer);
 
 		players[0].control();
 		players[1].control();
@@ -112,13 +114,12 @@ int main(){
 		players[0].collidePlayers(players);
 		players[1].collidePlayers(players);
 
+		//debug::printDirection(players[0]);
 		//debug::printPos(players[0]);
 		//debug::printPos(players[1]);
 		//debug::drawHitbox(renderer, players[0]);
 		//debug::drawHitbox(renderer, players[1]);
 		
-		//std::cout << players[0].animation.offset << "\n";
-
 		players[0].draw(renderer);
 		players[1].draw(renderer);
 	 
