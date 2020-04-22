@@ -1,7 +1,0 @@
-#ifndef DASHRESOLUTIONSCONSTANTS_H
-#define DASHRESOLUTIONSCONSTANTS_H
-
-const int resolutions[2][13] = {{640, 800, 1024, 1152, 1176, 1280, 1280, 1280, 1280, 1360, 1440, 1600, 1920},
-								{360, 600, 768,  864,  664,  720,  768,  800,  1024, 768,  900,  900,  1080}};
-
-#endif

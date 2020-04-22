@@ -2,6 +2,7 @@
 #define DASHDECAL_H
 
 #include <SDL/SDL.h>
+#include "structs/character.h"
 
 class Decal {
 public:
@@ -11,20 +12,13 @@ public:
 	int time;
 	double angle;
 
-	Decal(SDL_Texture* texture, SDL_Rect src, SDL_Rect dst, int maxTime){
-		this->sprite = texture;
-		this->src = src;
-		this->dst = dst;
-		this->time = maxTime;
-		this->angle = 0;
-	}
+	Decal(SDL_Texture* texture, SDL_Rect src, SDL_Rect dst, int maxTime);
 
-	void setOpacity(int opacity){
-		SDL_SetTextureAlphaMod(sprite, opacity);
-	}
+	void setOpacity(int opacity);
 
-	void draw(SDL_Renderer* renderer, double angle = 0, SDL_RendererFlip flip = SDL_FLIP_NONE){
-		SDL_RenderCopyEx(renderer, sprite, &src, &dst, angle, {0}, flip);
-	}
+	void draw(SDL_Renderer* renderer, double angle = 0, SDL_RendererFlip flip = SDL_FLIP_NONE);
+
 };
+
+
 #endif

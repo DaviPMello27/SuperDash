@@ -12,5 +12,6 @@ struct System {
 	bool running;
 	GameState state;
 };
+System dashSystem(System system);
 
 #endif
