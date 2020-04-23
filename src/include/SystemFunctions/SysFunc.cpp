@@ -45,7 +45,7 @@ void eventHandler(Player* players, System* system) { //TODO: get this out of mai
 		players[1].respondToKey(event);
 		switch (event.type) {
 		case SDL_QUIT:
-			system.running = false;
+			system->running = false;
 			break;
 		}
 	}

@@ -14,6 +14,7 @@ struct Character {
 	const char* name;
 	Stats stat;
 	SDL_Texture* sprite;
+	Character(int ID);
 };
 
 #endif

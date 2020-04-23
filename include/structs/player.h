@@ -4,14 +4,14 @@
 #include <SDL/SDL.h>
 #include <iostream>
 #include "screen.h"
-#include "constants/map.h" //temporary until we build the maps using the Map struct
+#include "structs/map.h"
 #include "player_components.h"
 #include "structs/character.h"
 
 namespace tools {
-	static bool collide(SDL_Rect first, SDL_Rect second);
+	bool collide(SDL_Rect first, SDL_Rect second);
 
-	static Direction getCollisionDirection(SDL_Point a, SDL_Point b, Size size);
+	Direction getCollisionDirection(SDL_Point a, SDL_Point b, Size size);
 }
 
 struct Player {

@@ -1,13 +1,13 @@
 #include "structs/player.h"
 
-static bool tools::collide(SDL_Rect first, SDL_Rect second) {
+bool tools::collide(SDL_Rect first, SDL_Rect second) {
 	if (first.x + first.w > second.x && first.x < second.x + second.w && first.y < second.y + second.h && first.y + first.h > second.y) {
 		return true;
 	}
 	return false;
 }
 
-static Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
+Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
 	int xDif = a.x - b.x;
 	int yDif = a.y - b.y;
 	if (abs(xDif) + size.h > abs(yDif) + size.w + 1) {

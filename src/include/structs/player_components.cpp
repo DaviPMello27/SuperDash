@@ -29,7 +29,7 @@ void Animation::jump(float ySpeed) {
 	src = { offset, 0, 24, 38 };
 }
 
-void Animation::death(float ySpeed, int addOffset = 0) {
+void Animation::death(float ySpeed, int addOffset) {
 	if (ySpeed < -1.5) {
 		offset = 240 + addOffset;
 	}

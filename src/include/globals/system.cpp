@@ -1,7 +1,8 @@
 #include "structs/system.h"
 
 
-System dashSystem(System system) {
-	system = { true, GAMESTATE_MAINMENU };
-	return system;
+
+System::System(bool running, GameState state) {
+	this->running = running;
+	this->state = state;
 }

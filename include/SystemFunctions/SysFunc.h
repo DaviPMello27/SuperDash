@@ -4,7 +4,6 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include "structs/headers.h"
-#include "constants/constants.h"
 #include "structs/decal.h"
 
 

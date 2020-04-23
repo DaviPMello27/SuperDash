@@ -11,7 +11,7 @@ enum GameState {
 struct System {
 	bool running;
 	GameState state;
+	System(bool running = true, GameState state = GAMESTATE_MAINMENU);
 };
-System dashSystem(System system);
 
 #endif
