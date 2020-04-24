@@ -10,8 +10,8 @@
 namespace debug {
 	void printPos(Player player);
 	void printDirection(Player player);
+	void drawHitbox(SDL_Renderer* renderer, Player player);
 }
-void drawHitbox(SDL_Renderer* renderer, Player player);
 
 Screen setWindowSize(int w, int h);
 

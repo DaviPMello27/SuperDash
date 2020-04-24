@@ -11,25 +11,22 @@ Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
 	int xDif = a.x - b.x;
 	int yDif = a.y - b.y;
 	if (abs(xDif) + size.h > abs(yDif) + size.w + 1) {
-		if (xDif < 0) {
+		if(xDif < 0){
 			return Direction::RIGHT;
-		}
-		else {
+		} else {
 			return Direction::LEFT;
 		}
-	}
-	else {
-		if (yDif < 0) {
+	} else {
+		if(yDif < 0){
 			return Direction::UP;
-		}
-		else {
+		} else {
 			return Direction::DOWN;
 		}
 	}
 }
 
 
-Player::Player(Character* character, int x, int y, KeyCodes codes) {
+Player::Player(Character* character, int x, int y, KeyCodes codes){
 	this->character = character;
 	this->direction = (x < 300) ? Direction::RIGHT : Direction::LEFT;
 	this->speed = { 0, 0 };
@@ -50,11 +47,10 @@ void Player::kill(float killerSpeed, bool knockback) {
 	state = State::DEFEATED;
 	if ((direction == Direction::LEFT && killerSpeed < 0) || (direction == Direction::RIGHT && killerSpeed > 0)) {
 		animation.type = AnimationType::DEATHBACK;
-	}
-	else {
+	} else {
 		animation.type = AnimationType::DEATHFRONT;
 	}
-	if (knockback) {
+	if(knockback){
 		speed.x = killerSpeed * 1.5f;
 		pos.y -= 30;
 		speed.y -= 10;
@@ -69,8 +65,7 @@ void Player::applyXSpeed(Map map) {
 			collideLeft(map);
 			collideRight(map);
 		}
-	}
-	else {
+	} else {
 		pos.x += static_cast<int>(speed.x);
 		collideLeft(map);
 		collideRight(map);
@@ -84,8 +79,7 @@ void Player::applyYSpeed(Map map) {
 			collideUp(map);
 			collideDown(map);
 		}
-	}
-	else {
+	} else {
 		pos.y += static_cast<int>(speed.y);
 		collideUp(map);
 		collideDown(map);
@@ -95,18 +89,17 @@ void Player::applyYSpeed(Map map) {
 void Player::changeDirection() {
 	if (keys.right) {
 		direction = Direction::RIGHT;
-	}
-	else if (keys.left) {
+	} else if (keys.left) {
 		direction = Direction::LEFT;
 	}
 }
 
 void Player::move(Map map) {
 	float maxSpeed = 2.0f + character->stat.speed;
-	if (state == State::MIDAIR)
+	if(state == State::MIDAIR)
 		maxSpeed /= 1.5;
 
-	if (state == State::WALKING && keys.up == false)
+	if(state == State::WALKING && keys.up == false)
 		canJump = true;
 
 	changeDirection();
@@ -119,7 +112,7 @@ void Player::move(Map map) {
 			animation.type = AnimationType::JUMP;
 		}
 		speed.y -= 4 + (0.4f * character->stat.jumpPower);
-		if (speed.y <= -(10 + (0.4f * character->stat.jumpPower))) {
+		if (speed.y <= -(8 + (0.4f * character->stat.jumpPower))) {
 			canJump = false;
 		}
 	}
@@ -129,7 +122,7 @@ void Player::move(Map map) {
 		if (speed.y < 0 && !keys.up) {
 			speed.y += 0.5;
 		}
-		speed.y += 1.0f / 3;
+		speed.y += 1.0f / 5;
 		applyYSpeed(map);
 		if (speed.y > 0) canJump = false;
 	}
@@ -140,8 +133,7 @@ void Player::move(Map map) {
 		if (speed.x < maxSpeed && state != State::DEFEATED) {
 			speed.x++;
 		}
-	}
-	else if (speed.x > 0) {
+	} else if (speed.x > 0) {
 		speed.x -= 0.5;
 	}
 
@@ -151,8 +143,7 @@ void Player::move(Map map) {
 		if (speed.x > -maxSpeed && state != State::DEFEATED) {
 			speed.x--;
 		}
-	}
-	else if (speed.x < 0) {
+	} else if (speed.x < 0) {
 		speed.x += 0.5;
 	}
 	applyXSpeed(map);
@@ -167,8 +158,7 @@ void Player::move(Map map) {
 
 	if (pos.x > 800) { //solve repetition on dash()
 		pos.x = -size.w;
-	}
-	else if (pos.x < -size.w) {
+	} else if (pos.x < -size.w) {
 		pos.x = 800;
 	}
 }
@@ -192,35 +182,33 @@ void Player::dash(Map map) {
 			}
 			pos.y += static_cast<int>(speed.y);
 			collideUp(map);
-			break;
+		break;
 		case Direction::DOWN:
 			if (speed.y < maxSpeed) {
 				speed.y += 3 + character->stat.dashSpeed;
 			}
 			pos.y += static_cast<int>(speed.y);
 			collideDown(map);
-			break;
+		break;
 		case Direction::RIGHT:
 			if (speed.x < maxSpeed) {
 				speed.x += 3 + character->stat.dashSpeed / 3;
 			}
 			pos.x += static_cast<int>(speed.x);
 			collideRight(map);
-			break;
+		break;
 		case Direction::LEFT:
 			if (speed.x > -maxSpeed) {
 				speed.x -= 3 + character->stat.dashSpeed / 3;
 			}
 			pos.x += static_cast<int>(speed.x);
 			collideLeft(map);
-			break;
+		break;
 		}
 	}
-
 	if (pos.x > 800) {
 		pos.x = -size.w;
-	}
-	else if (pos.x < -size.w) {
+	} else if (pos.x < -size.w) {
 		pos.x = 800;
 	}
 }
@@ -228,29 +216,24 @@ void Player::dash(Map map) {
 
 // PUBLIC:
 
-
 void Player::control(Map map) {
-	if (dashCooldown) { dashCooldown--; }
+	if(dashCooldown){dashCooldown--;}
 	if (state != State::DASHING) {
 		move(map);
-	}
-	else if (state == State::DASHING) {
+	} else if (state == State::DASHING) {
 		dash(map);
 	}
-	if (animation.type == AnimationType::WALK) {
-		animation.walk((keys.right || keys.left), 168, 24);
-	}
-	else if (animation.type == AnimationType::JUMP) {
-		animation.jump(speed.y);
-	}
-	else if (animation.type == AnimationType::DEATHBACK) {
-		animation.death(speed.y, 96);
-	}
-	else if (animation.type == AnimationType::DEATHFRONT) {
-		animation.death(speed.y);
-	}
-	else if (animation.type == AnimationType::DASH) {
-		animation.dash(dashCooldown, 4.0 + character->stat.dashSpeed);
+	switch(animation.type){
+		case AnimationType::WALK:
+			animation.walk((keys.right || keys.left), 168, 24); break;
+		case AnimationType::JUMP:
+			animation.jump(speed.y); break;
+		case AnimationType::DEATHBACK:
+			animation.death(speed.y, 96); break;
+		case AnimationType::DEATHFRONT:
+			animation.death(speed.y); break;
+		case AnimationType::DASH:
+			animation.dash(dashCooldown, 4.0 + character->stat.dashSpeed); break;
 	}
 }
 
@@ -264,35 +247,37 @@ void Player::collidePlayers(Player* players) {
 	}
 }
 
-void Player::draw(SDL_Renderer* renderer) { //organize this mess
-	if (animation.type == AnimationType::DASH && direction == Direction::RIGHT) {
-		animation.dst = { pos.x - 106, pos.y, 144, size.h };
+void Player::draw(SDL_Renderer* renderer){
+	double angle = 0;
+	int yOffset = 0;
+	int xOffset = 0;
+	if(animation.type == AnimationType::DASH){
+		switch(direction){
+			case Direction::RIGHT:
+				xOffset = -106;
+			break;
+			case Direction::UP:
+				xOffset = -size.w * 1.5;
+				yOffset = size.h;
+				angle = 270;
+			break;
+			case Direction::DOWN:
+				xOffset = -size.w * 1.5;
+				yOffset = -size.h;
+				angle = 90;
+			break;
+		}
+		animation.dst = {pos.x + xOffset, pos.y + yOffset, 144, size.h};
+	} else {
+		animation.dst = {pos.x, pos.y, size.w, size.h};
 	}
-	else if (animation.type == AnimationType::DASH && direction == Direction::LEFT) {
-		animation.dst = { pos.x, pos.y, 144, size.h };
+	
+	if(direction == Direction::LEFT){
+		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, angle, {0}, SDL_FLIP_HORIZONTAL);
+	} else {
+		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, angle, {0}, SDL_FLIP_NONE);
 	}
-	else if (animation.type == AnimationType::DASH && direction == Direction::UP) {
-		animation.dst = { pos.x - size.w, pos.y + size.h, 144, size.h };
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 270, { 0 }, SDL_FLIP_NONE);
-		animation.dst = { pos.x, pos.y, size.w, 144 };
-		return;
-	}
-	else if (animation.type == AnimationType::DASH && direction == Direction::DOWN) {
-		animation.dst = { pos.x - size.w, pos.y + size.h, 144, size.h };
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 90, { 0 }, SDL_FLIP_NONE);
-		animation.dst = { pos.x, pos.y, size.w, 144 };
-		return;
-	}
-	else {
-		animation.dst = { pos.x, pos.y, size.w, size.h };
-	}
-
-	if (direction == Direction::LEFT) {
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 0, { 0 }, SDL_FLIP_HORIZONTAL);
-	}
-	else {
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, 0, { 0 }, SDL_FLIP_NONE);
-	}
+	animation.dst = {pos.x, pos.y, size.w, size.h};
 }
 
 void Player::respondToKey(SDL_Event event) {
@@ -302,31 +287,24 @@ void Player::respondToKey(SDL_Event event) {
 		if (state != State::DEFEATED) {
 			if (key == keyCodes.right) {
 				keys.right = true;
-			}
-			else if (key == keyCodes.left) {
+			} else if (key == keyCodes.left) {
 				keys.left = true;
-			}
-			else if (key == keyCodes.up) {
+			} else if (key == keyCodes.up) {
 				keys.up = true;
-			}
-			else if (key == keyCodes.down) {
+			} else if (key == keyCodes.down) {
 				keys.down = true;
-			}
-			else if (key == keyCodes.dash && state != State::DASHING && !dashCooldown) {
+			} else if (key == keyCodes.dash && state != State::DASHING && !dashCooldown) {
 				if (keys.left || keys.up || keys.right || keys.down) {
 					dashCooldown = 50;
 					size.h = 38;
 					speed = { 0, 0 };
 					if (keys.left) {
 						direction = Direction::LEFT;
-					}
-					else if (keys.right) {
+					} else if (keys.right) {
 						direction = Direction::RIGHT;
-					}
-					else if (keys.up) {
+					} else if (keys.up) {
 						direction = Direction::UP;
-					}
-					else if (keys.down) {
+					} else if (keys.down) {
 						direction = Direction::DOWN;
 					}
 					animation.type = AnimationType::DASH;
@@ -334,6 +312,10 @@ void Player::respondToKey(SDL_Event event) {
 					state = State::DASHING;
 				}
 			}
+		} else if(key == SDLK_r){
+			state = State::WALKING;
+			animation.type = AnimationType::WALK;
+			animation.counter = 0;
 		}
 		break;
 	case SDL_KEYUP:

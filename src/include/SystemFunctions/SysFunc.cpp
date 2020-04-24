@@ -21,7 +21,7 @@
 		}
 	}
 
-	void drawHitbox(SDL_Renderer* renderer, Player player) {
+	void debug::drawHitbox(SDL_Renderer* renderer, Player player) {
 		if (player.state == State::DASHING) {
 			SDL_SetRenderDrawColor(renderer, 128, 0, 0, 1);
 		}

@@ -24,19 +24,19 @@ int main(){
 	SDL_Renderer* renderer = createRenderer(mainWindow);
 	System system;
 	Character* olavo = new Character(1);
-	Character* Wroth = new Character(2);
+	Character* wroth = new Character(2);
 	Map map;
 
 	Player players[] = {
-		Player(olavo, 100, 400, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
-		Player(Wroth, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
+		Player(wroth, 100, 400, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
+		Player(olavo, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
 	};
 
 	map.theme.tileSpriteSheet = IMG_LoadTexture(renderer, "assets/brick.png");
 	map.theme.background = IMG_LoadTexture(renderer, "assets/bg.png");
 	
 	olavo->sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
-	Wroth->sprite = IMG_LoadTexture(renderer, "assets/wroth.png");
+	wroth->sprite = IMG_LoadTexture(renderer, "assets/wroth.png");
 	
 	while(system.running){
 		eventHandler(players, &system);
@@ -65,6 +65,6 @@ int main(){
 		SDL_Delay(1000/120);
 	}
 	delete olavo;
-	delete Wroth;
+	delete wroth;
 	return 0;
 }
