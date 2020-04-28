@@ -29,7 +29,7 @@ int main(){
 
 	Player players[] = {
 		Player(wroth, 100, 400, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
-		Player(olavo, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_p}),
+		Player(olavo, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_SLASH}),
 	};
 
 	map.theme.tileSpriteSheet = IMG_LoadTexture(renderer, "assets/brick.png");
@@ -53,7 +53,7 @@ int main(){
 		players[1].collidePlayers(players);
 
 		//debug::printDirection(players[0]);
-		//debug::printPos(players[0]);
+		debug::printPos(players[0]);
 		//debug::printPos(players[1]);
 		//debug::drawHitbox(renderer, players[0]);
 		//debug::drawHitbox(renderer, players[1]);
