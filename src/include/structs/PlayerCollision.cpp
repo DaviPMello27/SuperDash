@@ -1,7 +1,7 @@
 #include "structs/player.h"
 
 void Player::collideUp(Map map) {
-	if (speed.y < 0 &&                                                          //if character is moving up
+	if (speed.y < 0 &&																     //if character is moving up
 		(map.tileData[(pos.y) / 25][(pos.x) / 25] != 0 ||                                //if top-left is hitting block
 		 map.tileData[(pos.y) / 25][(pos.x + size.w - 1) / 25] != 0)                     //if top-right is hitting block
 		) {
@@ -13,16 +13,16 @@ void Player::collideUp(Map map) {
 
 void Player::collideDown(Map map) { //TODO: organize this mess
 	if(speed.y > 0 &&
-		(map.tileData[(pos.y + size.h) / 25][(pos.x) / 25] == 5 ||                       //bottom left
+		(map.tileData[(pos.y + size.h) / 25][(pos.x) / 25] == 5 ||                        //bottom left
 		 map.tileData[(pos.y + size.h) / 25][(pos.x + size.w - 1) / 25] == 5)) {          //bottom right
 		pos.y -= 10;
 		speed.y = -12;
 		animation.offset = 0;
 		dashCooldown = 0;
 	} else if(speed.y > 0 &&
-		(map.tileData[(pos.y + size.h) / 25][(pos.x) / 25] == 1 ||                       //bottom left
-		map.tileData[(pos.y + size.h) / 25][(pos.x + size.w - 1) / 25] == 1)) {          //bottom right
-		pos.y -= (pos.y + size.h) % 25; //set position to the top of the block
+		(map.tileData[(pos.y + size.h) / 25][(pos.x) / 25] == 1 ||						//bottom left
+		map.tileData[(pos.y + size.h) / 25][(pos.x + size.w - 1) / 25] == 1)) {         //bottom right
+		pos.y -= (pos.y + size.h) % 25;													//set position to the top of the block
 		speed.y = 0;
 		animation.offset = 0;
 		if(state == State::DASHING) {

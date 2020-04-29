@@ -43,8 +43,8 @@ int main(){
 
 		SDL_SetRenderDrawColor(renderer, 128, 128, 150, 1);
 		SDL_RenderClear(renderer);
+
 		SDL_RenderCopy(renderer, map.theme.background, nullptr, nullptr);
-		map.build(renderer);
 
 		players[0].control(map);
 		players[1].control(map);
@@ -61,6 +61,8 @@ int main(){
 		players[0].draw(renderer);
 		players[1].draw(renderer);
 	 
+		map.build(renderer);
+
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1000/120);
 	}
