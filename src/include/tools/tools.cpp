@@ -1,6 +1,5 @@
-#include "genericFunctions/rand.h"
+#include <random>
 
 int randint(int min, int max) {
-	srand(time(NULL));
 	return (rand() % max - min) + min;
 }

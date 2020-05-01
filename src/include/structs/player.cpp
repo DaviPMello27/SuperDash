@@ -11,17 +11,9 @@ Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
 	int xDif = a.x - b.x;
 	int yDif = a.y - b.y;
 	if (abs(xDif) + size.h > abs(yDif) + size.w + 1) {
-		if(xDif < 0){
-			return Direction::RIGHT;
-		} else {
-			return Direction::LEFT;
-		}
+		return (xDif < 0) ? Direction::RIGHT : Direction::LEFT;
 	} else {
-		if(yDif < 0){
-			return Direction::UP;
-		} else {
-			return Direction::DOWN;
-		}
+		return (yDif < 0) ? Direction::UP : Direction::DOWN;
 	}
 }
 
@@ -29,13 +21,13 @@ Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
 Player::Player(Character* character, int x, int y, KeyCodes codes){
 	this->character = character;
 	this->direction = (x < 300) ? Direction::RIGHT : Direction::LEFT;
-	this->speed = { 0, 0 };
+	this->speed = {0, 0};
 	this->state = State::WALKING;
-	this->keys = { 0, 0, 0, 0 };
+	this->keys = {0, 0, 0, 0};
 	this->keyCodes = codes;
-	this->pos = { x, y };
-	this->size = { 36, 57 };
-	this->animation = { AnimationType::WALK, 0, 0, {animation.offset, 0, 24, 38}, {pos.x, pos.y, size.w, size.h} };
+	this->pos = {x, y};
+	this->size = {25, 50};
+	this->animation = {AnimationType::WALK, 0, 0, {animation.offset, 0, 24, 48}, {pos.x, pos.y, size.w, size.h}};
 	this->canJump = true;
 	this->canDash = true;
 	this->dashCooldown = 0;
@@ -43,9 +35,10 @@ Player::Player(Character* character, int x, int y, KeyCodes codes){
 	this->team = 0;
 }
 
-void Player::kill(float killerSpeed, bool knockback) {
+void Player::kill(float killerSpeed, bool knockback){
 	state = State::DEFEATED;
-	if ((direction == Direction::LEFT && killerSpeed < 0) || (direction == Direction::RIGHT && killerSpeed > 0)) {
+	bool hitFromBehind = (direction == Direction::LEFT && killerSpeed < 0) || (direction == Direction::RIGHT && killerSpeed > 0);
+	if (hitFromBehind) {
 		animation.type = AnimationType::DEATHBACK;
 	} else {
 		animation.type = AnimationType::DEATHFRONT;
@@ -56,7 +49,6 @@ void Player::kill(float killerSpeed, bool knockback) {
 		speed.y -= 10;
 	}
 }
-
 
 void Player::applyXSpeed(Map map) {
 	if (abs(static_cast<int>(speed.x)) > 5) {
@@ -73,8 +65,8 @@ void Player::applyXSpeed(Map map) {
 }
 
 void Player::applyYSpeed(Map map) {
-	if (abs(static_cast<int>(speed.y)) > 5) {
-		for (int i = 0; i < 2; i++) {
+	if(abs(static_cast<int>(speed.y)) > 5){
+		for(int i = 0; i < 2; i++){
 			pos.y += static_cast<int>(speed.y) / 2;
 			collideUp(map);
 			collideDown(map);
@@ -87,10 +79,23 @@ void Player::applyYSpeed(Map map) {
 }
 
 void Player::changeDirection() {
-	if (keys.right) {
+	if(keys.right){
 		direction = Direction::RIGHT;
-	} else if (keys.left) {
+	} else if (keys.left){
 		direction = Direction::LEFT;
+	}
+}
+
+void Player::checkPacmanEffect(){ //TODO: solve repetition on dash()
+	if(pos.x > 800){ //horizontal
+		pos.x = -size.w;
+	} else if(pos.x < -size.w) {
+		pos.x = 800;
+	}
+	if(pos.y > 600){ //vertical
+		pos.y = -size.h;
+	} else if(pos.y < -size.h) {
+		pos.y = 800;
 	}
 }
 
@@ -106,13 +111,13 @@ void Player::move(Map map) {
 
 	//==========JUMP==========//
 	if (keys.up && canJump) {
-		if (state == State::WALKING) {
+		if(state == State::WALKING){
 			pos.y--;
 			state = State::MIDAIR;
 			animation.type = AnimationType::JUMP;
 		}
 		speed.y -= 4 + (0.4f * character->stat.jumpPower);
-		if (speed.y <= -(8 + (0.4f * character->stat.jumpPower))) {
+		if(speed.y <= -(8 + (0.4f * character->stat.jumpPower))){ //jump limit
 			canJump = false;
 		}
 	}
@@ -124,7 +129,7 @@ void Player::move(Map map) {
 		}
 		speed.y += 1.0f / 5;
 		applyYSpeed(map);
-		if (speed.y > 0) canJump = false;
+		if(speed.y > 0) canJump = false;
 	}
 
 	//==========RIGHT==========//
@@ -146,31 +151,30 @@ void Player::move(Map map) {
 	} else if (speed.x < 0) {
 		speed.x += 0.5;
 	}
+
 	applyXSpeed(map);
 
-	//==========LANDING==========//
-	if (state == State::WALKING &&
-		map.tileData[(pos.y + size.h + 1) / 25][(pos.x) / 25] == 0 &&                    //bottom left
-		map.tileData[(pos.y + size.h + 1) / 25][(pos.x + size.w) / 25] == 0) {                //bottom right
-		state = State::MIDAIR;
-		animation.type = AnimationType::JUMP;
-	}
+	//==========FALLING OFF==========//
+	if(state == State::WALKING){
+		char bottomLeft = map.tileData[(pos.y + size.h + 1) / 25][(pos.x) / 25];
+		char bottomRight = map.tileData[(pos.y + size.h + 1) / 25][(pos.x + size.w) / 25];
 
-	if (pos.x > 800) { //solve repetition on dash()
-		pos.x = -size.w;
-	} else if (pos.x < -size.w) {
-		pos.x = 800;
+		if(bottomLeft == 97 && bottomRight == 97){
+			state = State::MIDAIR;
+			animation.type = AnimationType::JUMP;
+		}
 	}
+	checkPacmanEffect(); //remove from both move() and dash()?
 }
 
 void Player::dash(Map map) {
 	float maxSpeed = 4.0f + character->stat.dashSpeed;
-	if (!dashCooldown) {
+	if(!dashCooldown) {
 		animation.type = AnimationType::JUMP;
 		state = State::MIDAIR;
 		canJump = false;
 		dashCooldown = (6 - character->stat.recoveryTime) * 30;
-		size.h = 57;
+		size.h = 50;
 		return;
 	}
 
@@ -180,42 +184,32 @@ void Player::dash(Map map) {
 			if (speed.y > -maxSpeed) {
 				speed.y -= 3 + character->stat.dashSpeed / 3;
 			}
-			pos.y += static_cast<int>(speed.y);
-			collideUp(map);
 		break;
 		case Direction::DOWN:
 			if (speed.y < maxSpeed) {
 				speed.y += 3 + character->stat.dashSpeed;
 			}
-			pos.y += static_cast<int>(speed.y);
-			collideDown(map);
 		break;
 		case Direction::RIGHT:
 			if (speed.x < maxSpeed) {
 				speed.x += 3 + character->stat.dashSpeed / 3;
 			}
-			pos.x += static_cast<int>(speed.x);
-			collideRight(map);
 		break;
 		case Direction::LEFT:
 			if (speed.x > -maxSpeed) {
 				speed.x -= 3 + character->stat.dashSpeed / 3;
 			}
-			pos.x += static_cast<int>(speed.x);
-			collideLeft(map);
 		break;
 		}
+		applyXSpeed(map);
+		applyYSpeed(map);
 	}
-	if (pos.x > 800) {
-		pos.x = -size.w;
-	} else if (pos.x < -size.w) {
-		pos.x = 800;
-	}
+
+	checkPacmanEffect(); //remove from both move() and dash()?
 }
 
 
 // PUBLIC:
-
 void Player::control(Map map) {
 	if(dashCooldown){dashCooldown--;}
 	if (state != State::DASHING) {

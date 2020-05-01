@@ -1,7 +1,7 @@
 #include "structs/player_components.h"
 
 void Animation::walk(bool condition, int limit, int variation) {
-	src = { offset, 0, 24, 38 };
+	src = { offset, 0, 24, 48 };
 	if (condition) {
 		counter++;
 		if (counter % 10 == 0) {
@@ -26,7 +26,7 @@ void Animation::jump(float ySpeed) {
 	else {
 		offset = 216;
 	}
-	src = { offset, 0, 24, 38 };
+	src = { offset, 0, 24, 48 };
 }
 
 void Animation::death(float ySpeed, int addOffset) {
@@ -42,7 +42,7 @@ void Animation::death(float ySpeed, int addOffset) {
 	else if (ySpeed >= 1.5) {
 		offset = 288 + addOffset;
 	}
-	src = { offset, 0, 24, 38 };
+	src = { offset, 0, 24, 48 };
 }
 
 void Animation::dash(int cooldown, double maxSpeed) {
@@ -55,5 +55,5 @@ void Animation::dash(int cooldown, double maxSpeed) {
 	else {
 		offset = 144 + 72 * (cooldown % 4);
 	}
-	src = { offset, 38, 72, 24 };
+	src = { offset, 48, 72, 24 };
 }

@@ -56,6 +56,8 @@ private:
 
 	void changeDirection();
 
+	void checkPacmanEffect();
+
 	void move(Map map);
 
 	void dash(Map map);

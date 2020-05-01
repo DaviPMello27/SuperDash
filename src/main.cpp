@@ -14,9 +14,6 @@
 #include <SDL/SDL_image.h>
 #include "SystemFunctions/SysFunc.h"
 
-
-
-
 int main(){
 	Screen screen = setWindowSize(800, 600); //TODO: implement file reading
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -32,10 +29,12 @@ int main(){
 		Player(olavo, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_SLASH}),
 	};
 
+	map.loadMap("map/map.txt");
+		
 	map.theme.tileSpriteSheet = IMG_LoadTexture(renderer, "assets/brick.png");
 	map.theme.background = IMG_LoadTexture(renderer, "assets/bg.png");
 	
-	olavo->sprite = IMG_LoadTexture(renderer, "assets/OlavoSprite.png");
+	olavo->sprite = IMG_LoadTexture(renderer, "assets/newOlavo.png");
 	wroth->sprite = IMG_LoadTexture(renderer, "assets/wroth.png");
 	
 	while(system.running){
@@ -43,7 +42,6 @@ int main(){
 
 		SDL_SetRenderDrawColor(renderer, 128, 128, 150, 1);
 		SDL_RenderClear(renderer);
-
 		SDL_RenderCopy(renderer, map.theme.background, nullptr, nullptr);
 
 		players[0].control(map);
@@ -53,20 +51,18 @@ int main(){
 		players[1].collidePlayers(players);
 
 		//debug::printDirection(players[0]);
-		debug::printPos(players[0]);
+		//debug::printDirection(players[1]);
+		//debug::printPos(players[0]);
 		//debug::printPos(players[1]);
 		//debug::drawHitbox(renderer, players[0]);
 		//debug::drawHitbox(renderer, players[1]);
 		
 		players[0].draw(renderer);
 		players[1].draw(renderer);
-	 
 		map.build(renderer);
-
+	 
 		SDL_RenderPresent(renderer);
 		SDL_Delay(1000/120);
 	}
-	delete olavo;
-	delete wroth;
 	return 0;
 }
