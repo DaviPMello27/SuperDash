@@ -12,6 +12,10 @@ void Decal::setOpacity(int opacity) {
 	SDL_SetTextureAlphaMod(sprite, opacity);
 }
 
+void Decal::decrementTime(){
+	time -= 3;
+}
+
 void Decal::draw(SDL_Renderer* renderer, double angle, SDL_RendererFlip flip) {
-	SDL_RenderCopyEx(renderer, sprite, &src, &dst, angle, { 0 }, flip);
+	SDL_RenderCopyEx(renderer, sprite, &src, &dst, angle, {0}, flip);
 }

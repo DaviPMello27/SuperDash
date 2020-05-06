@@ -1,4 +1,5 @@
 #include "structs/player.h"
+#include "structs/decal.h"
 
 bool tools::collide(SDL_Rect first, SDL_Rect second) {
 	if (first.x + first.w > second.x && first.x < second.x + second.w && first.y < second.y + second.h && first.y + first.h > second.y) {
@@ -7,16 +8,15 @@ bool tools::collide(SDL_Rect first, SDL_Rect second) {
 	return false;
 }
 
-Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b, Size size) {
+Direction tools::getCollisionDirection(SDL_Point a, SDL_Point b) {
 	int xDif = a.x - b.x;
 	int yDif = a.y - b.y;
-	if (abs(xDif) + size.h > abs(yDif) + size.w + 1) {
+	if (abs(xDif) > abs(yDif)) {
 		return (xDif < 0) ? Direction::RIGHT : Direction::LEFT;
 	} else {
 		return (yDif < 0) ? Direction::UP : Direction::DOWN;
 	}
 }
-
 
 Player::Player(Character* character, int x, int y, KeyCodes codes){
 	this->character = character;
@@ -50,31 +50,31 @@ void Player::kill(float killerSpeed, bool knockback){
 	}
 }
 
-void Player::applyXSpeed(Map map) {
+void Player::applyXSpeed(Map map, Decal* decals) {
 	if (abs(static_cast<int>(speed.x)) > 5) {
 		for (int i = 0; i < 2; i++) {
 			pos.x += static_cast<int>(speed.x) / 2;
-			collideLeft(map);
-			collideRight(map);
+			collideLeft(map, decals);
+			collideRight(map, decals);
 		}
 	} else {
 		pos.x += static_cast<int>(speed.x);
-		collideLeft(map);
-		collideRight(map);
+		collideLeft(map, decals);
+		collideRight(map, decals);
 	}
 }
 
-void Player::applyYSpeed(Map map) {
+void Player::applyYSpeed(Map map, Decal* decals) {
 	if(abs(static_cast<int>(speed.y)) > 5){
 		for(int i = 0; i < 2; i++){
 			pos.y += static_cast<int>(speed.y) / 2;
-			collideUp(map);
-			collideDown(map);
+			collideUp(map, decals);
+			collideDown(map, decals);
 		}
 	} else {
 		pos.y += static_cast<int>(speed.y);
-		collideUp(map);
-		collideDown(map);
+		collideUp(map, decals);
+		collideDown(map, decals);
 	}
 }
 
@@ -99,7 +99,7 @@ void Player::checkPacmanEffect(){ //TODO: solve repetition on dash()
 	}
 }
 
-void Player::move(Map map) {
+void Player::move(Map map, Decal* decals) {
 	float maxSpeed = 2.0f + character->stat.speed;
 	if(state == State::MIDAIR)
 		maxSpeed /= 1.5;
@@ -128,7 +128,7 @@ void Player::move(Map map) {
 			speed.y += 0.5;
 		}
 		speed.y += 1.0f / 5;
-		applyYSpeed(map);
+		applyYSpeed(map, decals);
 		if(speed.y > 0) canJump = false;
 	}
 
@@ -152,7 +152,7 @@ void Player::move(Map map) {
 		speed.x += 0.5;
 	}
 
-	applyXSpeed(map);
+	applyXSpeed(map, decals);
 
 	//==========FALLING OFF==========//
 	if(state == State::WALKING){
@@ -167,7 +167,7 @@ void Player::move(Map map) {
 	checkPacmanEffect(); //remove from both move() and dash()?
 }
 
-void Player::dash(Map map) {
+void Player::dash(Map map, Decal* decals) {
 	float maxSpeed = 4.0f + character->stat.dashSpeed;
 	if(!dashCooldown) {
 		animation.type = AnimationType::JUMP;
@@ -201,8 +201,8 @@ void Player::dash(Map map) {
 			}
 		break;
 		}
-		applyXSpeed(map);
-		applyYSpeed(map);
+		applyXSpeed(map, decals);
+		applyYSpeed(map, decals);
 	}
 
 	checkPacmanEffect(); //remove from both move() and dash()?
@@ -210,12 +210,12 @@ void Player::dash(Map map) {
 
 
 // PUBLIC:
-void Player::control(Map map) {
+void Player::control(Map map, Decal* decals) {
 	if(dashCooldown){dashCooldown--;}
 	if (state != State::DASHING) {
-		move(map);
+		move(map, decals);
 	} else if (state == State::DASHING) {
-		dash(map);
+		dash(map, decals);
 	}
 	switch(animation.type){
 		case AnimationType::WALK:
@@ -231,11 +231,11 @@ void Player::control(Map map) {
 	}
 }
 
-void Player::collidePlayers(Player* players) {
+void Player::collidePlayers(Player* players, Decal *decals) {
 	for (int i = 0; i < 2; i++) { //check all players
 		if (players[i].state != State::DEFEATED && state != State::DEFEATED) { //check if players are alive
 			if (pos.x != players[i].pos.x || pos.y != players[i].pos.y) { //check if player's not himself
-				checkPlayersCollision(players[i]);
+				checkPlayersCollision(players[i], decals);
 			}
 		}
 	}
@@ -251,12 +251,12 @@ void Player::draw(SDL_Renderer* renderer){
 				xOffset = -106;
 			break;
 			case Direction::UP:
-				xOffset = -size.w * 1.5;
+				xOffset = int(-size.w * 2.3);
 				yOffset = size.h;
 				angle = 270;
 			break;
 			case Direction::DOWN:
-				xOffset = -size.w * 1.5;
+				xOffset = int(-size.w * 2.3);
 				yOffset = -size.h;
 				angle = 90;
 			break;

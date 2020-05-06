@@ -18,7 +18,7 @@ struct KeyCodes {
 	SDL_Keycode dash;
 };
 
-static enum class Direction{
+enum class Direction{
 	LEFT,
 	UP,
 	RIGHT,

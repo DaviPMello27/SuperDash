@@ -16,6 +16,19 @@ public:
 
 	void setOpacity(int opacity);
 
+	void decrementTime();
+
+	static void setDecalPosition(Decal* decal, int size, int x, int y){
+		for(int i = 0; i < size; i++){
+			if(decal[i].time < 100){
+				decal[i].dst.x = x;
+				decal[i].dst.y = y;
+				decal[i].time = 240;
+				return;
+			}
+		}
+	}
+
 	void draw(SDL_Renderer* renderer, double angle = 0, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 };

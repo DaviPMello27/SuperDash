@@ -7,11 +7,12 @@
 #include "structs/map.h"
 #include "player_components.h"
 #include "structs/character.h"
+#include "structs/decal.h"
 
 namespace tools {
 	bool collide(SDL_Rect first, SDL_Rect second);
 
-	Direction getCollisionDirection(SDL_Point a, SDL_Point b, Size size);
+	Direction getCollisionDirection(SDL_Point a, SDL_Point b);
 }
 
 struct Player {
@@ -34,38 +35,38 @@ struct Player {
 private: 
 	void kill(float killerSpeed, bool knockback = true);
 
-	void applyXSpeed(Map map);
+	void applyXSpeed(Map map, Decal* decals);
 	
-	void applyYSpeed(Map map);
+	void applyYSpeed(Map map, Decal* decals);
 
-	void collideUp(Map map);
+	void collideUp(Map map, Decal* decals);
 
-	void collideDown(Map map);
+	void collideDown(Map map, Decal* decals);
 
-	void collideRight(Map map);
+	void collideRight(Map map, Decal* decals);
 
-	void collideLeft(Map map);
+	void collideLeft(Map map, Decal* decals);
 
-	void collidePlayerHorizontal(Player& player);
+	void collidePlayerHorizontal(Player& player, Decal* decals);
 
-	void collidePlayerUp(Player& player);
+	void collidePlayerUp(Player& player, Decal* decals);
 
-	void collidePlayerDown(Player& player);
+	void collidePlayerDown(Player& player, Decal* decals);
 
-	void checkPlayersCollision(Player& player);
+	void checkPlayersCollision(Player& player, Decal* decals);
 
 	void changeDirection();
 
 	void checkPacmanEffect();
 
-	void move(Map map);
+	void move(Map map, Decal* decals);
 
-	void dash(Map map);
+	void dash(Map map, Decal* decals);
 
 public:
-	void control(Map map);
+	void control(Map map, Decal* decals);
 
-	void collidePlayers(Player* players);
+	void collidePlayers(Player* players, Decal* decals);
 
 	void draw(SDL_Renderer* renderer);
 
