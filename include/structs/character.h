@@ -11,10 +11,13 @@ struct Stats {
 };
 
 struct Character {
+	int id;
 	const char* name;
 	Stats stat;
 	SDL_Texture* sprite;
+
 	Character(int ID);
+	void loadSprite(SDL_Renderer* renderer);
 };
 
 #endif

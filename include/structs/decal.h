@@ -3,6 +3,7 @@
 
 #include <SDL/SDL.h>
 #include "structs/character.h"
+#include "structs/player_components.h"
 
 class Decal {
 public:
@@ -18,16 +19,7 @@ public:
 
 	void decrementTime();
 
-	static void setDecalPosition(Decal* decal, int size, int x, int y){
-		for(int i = 0; i < size; i++){
-			if(decal[i].time < 100){
-				decal[i].dst.x = x;
-				decal[i].dst.y = y;
-				decal[i].time = 240;
-				return;
-			}
-		}
-	}
+	static void setDecalPosition(Decal* decal, int size, int x, int y);
 
 	void draw(SDL_Renderer* renderer, double angle = 0, SDL_RendererFlip flip = SDL_FLIP_NONE);
 

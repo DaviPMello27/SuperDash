@@ -5,7 +5,8 @@
 #include <iostream>
 #include "screen.h"
 #include "structs/map.h"
-#include "player_components.h"
+#include "structs/player_components.h"
+#include "structs/animation.h"
 #include "structs/character.h"
 #include "structs/decal.h"
 
@@ -17,19 +18,19 @@ namespace tools {
 
 struct Player {
 	Character* character;
-	Animation animation;
-	Direction direction;
-	Speed speed;
-	State state;
-	DirectionKeys keys;
-	KeyCodes keyCodes;
 	SDL_Point pos;
 	Size size;
+	Speed speed;
+	State state;
+	Direction direction;
+	Animation animation;
+	SDL_Rect hitbox;
+	DirectionKeys keys;
+	KeyCodes keyCodes;
 	bool canJump = true;
 	bool canDash = true;
 	int dashCooldown;
-	int health;
-	int team;
+	
 
 	Player(Character* character, int x, int y, KeyCodes codes);
 private: 
@@ -68,12 +69,7 @@ public:
 
 	void collidePlayers(Player* players, Decal* decals);
 
-	void draw(SDL_Renderer* renderer);
-
 	void respondToKey(SDL_Event event);
 };
-
-Character createCharacterOlavo(Character olavo);
-Character createCharacterWroth(Character Wroth);
 
 #endif

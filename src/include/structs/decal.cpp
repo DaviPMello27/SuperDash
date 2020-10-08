@@ -16,6 +16,17 @@ void Decal::decrementTime(){
 	time -= 3;
 }
 
+void Decal::setDecalPosition(Decal* decal, int size, int x, int y){
+	for(int i = 0; i < size; i++){
+		if(decal[i].time < 100){
+			decal[i].dst.x = x;
+			decal[i].dst.y = y;
+			decal[i].time = 240;
+			return;
+		}
+	}
+}
+
 void Decal::draw(SDL_Renderer* renderer, double angle, SDL_RendererFlip flip) {
 	SDL_RenderCopyEx(renderer, sprite, &src, &dst, angle, {0}, flip);
 }

@@ -15,7 +15,7 @@ namespace debug {
 
 Screen setWindowSize(int w, int h);
 
-void eventHandler(Player* players, System* system);
+void eventHandler(Player* players, int numPlayers);
 
 SDL_Window* createMainWindow(Screen screen);
 

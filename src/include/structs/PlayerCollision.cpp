@@ -21,7 +21,7 @@ void Player::collideDown(Map map, Decal* decals) {
 		char bottomLeft = map.tileData[(pos.y + size.h) / 25][(pos.x) / 25]; 
 		char bottomRight = map.tileData[(pos.y + size.h) / 25][(pos.x + size.w - 1) / 25]; 
 
-		if(bottomLeft == 102 || bottomRight == 102){ //boucy block
+		if(bottomLeft == 102 || bottomRight == 102){ //bouncy block
 			pos.y -= 10; 
 			speed.y = -12; 
 			animation.offset = 0; 
@@ -37,7 +37,7 @@ void Player::collideDown(Map map, Decal* decals) {
 			}
 			if(state != State::DEFEATED){ 
 				state = State::WALKING; 
-				animation.type = AnimationType::WALK; 
+				animation.type = AnimationType::PLAYER_WALK; 
 			}
 		}
 	}
@@ -46,7 +46,7 @@ void Player::collideDown(Map map, Decal* decals) {
 void Player::collideRight(Map map, Decal* decals) {
 	char topRight = map.tileData[pos.y / 25][((pos.x + size.w - 1) / 25) % 32];
 	char middleRight = map.tileData[(pos.y + size.h / 2) / 25][((pos.x + size.w - 1) / 25) % 32];
-	char bottomRight = map.tileData[(pos.y + size.h - 1) / 25][((pos.x + size.w - 1) / 25) % 32];
+	char bottomRight = map.tileData[(pos.y + size.h - 2) / 25][((pos.x + size.w - 1) / 25) % 32];
 
 	if (topRight != 97 || middleRight != 97 || bottomRight != 97){
 		pos.x -= static_cast<int>(speed.x);
@@ -101,8 +101,6 @@ void Player::collidePlayerUp(Player& player, Decal* decals) {
 		canJump = false;
 		speed.y = -8.0f;
 		speed.x = (pos.x - player.pos.x) / 5.0f;
-		player.dashCooldown = 0;
-		dashCooldown = 0;
 	}
 }
 
@@ -116,13 +114,14 @@ void Player::collidePlayerDown(Player& player, Decal* decals) {
 	} else {
 		if(state == State::MIDAIR){pos.y++;}
 		speed.y = 0;
-		player.dashCooldown = 0;
-		dashCooldown = 0;
 	}
 }
 
 void Player::checkPlayersCollision(Player& player, Decal* decals) {
-	if (abs(pos.x - player.pos.x) < size.w && abs(pos.y - player.pos.y) < size.h) { //check if colliding
+	bool colliding = 
+		abs((hitbox.x + speed.x) - (player.hitbox.x + player.speed.x)) < size.w * 0.75 &&
+		abs((hitbox.y + speed.y) - (player.hitbox.y + player.speed.y)) < size.h * 0.75;
+	if (colliding){
 		Direction dir = tools::getCollisionDirection(pos, player.pos);
 		if ((dir == Direction::RIGHT || dir == Direction::LEFT)) {
 			collidePlayerHorizontal(player, decals);

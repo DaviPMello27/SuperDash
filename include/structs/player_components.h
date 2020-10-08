@@ -37,29 +37,4 @@ struct Speed {
 	float y;
 };
 
-enum class AnimationType {
-	STAND,
-	WALK,
-	JUMP,
-	DASH,
-	DEATHFRONT,
-	DEATHBACK
-};
-
-struct Animation {
-	AnimationType type;
-	int counter;
-	int offset;
-	SDL_Rect src;
-	SDL_Rect dst;
-
-	void walk(bool condition, int limit, int variation);
-
-	void jump(float ySpeed);
-
-	void death(float ySpeed, int addOffset = 0);
-
-	void dash(int cooldown, double maxSpeed);
-};
-
 #endif

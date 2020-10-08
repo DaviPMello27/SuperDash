@@ -1,51 +1,51 @@
 #include "SystemFunctions/SysFunc.h"
 #include <iostream>
 
-	void debug::printPos(Player player) {
-		std::cout << player.pos.x << "/" << player.pos.y << ", ";
-		std::cout << player.speed.x << "/" << player.speed.y << "\n";
-	}
+void debug::printPos(Player player) {
+	std::cout << player.pos.x << "/" << player.pos.y << ", ";
+	std::cout << player.speed.x << "/" << player.speed.y << "\n";
+}
 
-	void debug::printDirection(Player player) {
-		if (player.direction == Direction::LEFT) {
-			std::cout << "left\n";
-		}
-		else if (player.direction == Direction::UP) {
-			std::cout << "up\n";
-		}
-		else if (player.direction == Direction::RIGHT) {
-			std::cout << "right\n";
-		}
-		else {
-			std::cout << "down\n";
-		}
+void debug::printDirection(Player player) {
+	if(player.direction == Direction::LEFT) {
+		std::cout << "left\n";
+	} else if(player.direction == Direction::UP) {
+		std::cout << "up\n";
+	} else if(player.direction == Direction::RIGHT) {
+		std::cout << "right\n";
+	} else {
+		std::cout << "down\n";
 	}
+}
 
-	void debug::drawHitbox(SDL_Renderer* renderer, Player player) {
-		if (player.state == State::DASHING) {
-			SDL_SetRenderDrawColor(renderer, 128, 0, 0, 1);
-		}
-		else {
-			SDL_SetRenderDrawColor(renderer, 28, 28, 28, 1);
-		}
-		SDL_RenderFillRect(renderer, &player.animation.dst);
+void debug::drawHitbox(SDL_Renderer* renderer, Player player) {
+	if(player.state == State::DASHING) {
+		SDL_SetRenderDrawColor(renderer, 128, 0, 0, 128);
+	} else {
+		SDL_SetRenderDrawColor(renderer, 0, 128, 28, 128);
 	}
+	SDL_RenderFillRect(renderer, &player.hitbox);
+}
 
 Screen setWindowSize(int w, int h) { //TODO: put this in the Screen struct
 	return {
 		{w, h},
-		{w / 800.0f, h / 600.0f}
+	{w / 800.0f, h / 600.0f}
 	};
 }
 
-void eventHandler(Player* players, System* system) { //TODO: get this out of main.cpp
+void respondToPlayersKeys(Player* players, int numPlayers, SDL_Event event){
+	for(int i = 0; i < numPlayers; i++)
+		players[i].respondToKey(event);
+}
+
+void eventHandler(Player* players, int numPlayers) {
 	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		players[0].respondToKey(event);
-		players[1].respondToKey(event);
-		switch (event.type) {
-		case SDL_QUIT:
-			system->running = false;
+	while(SDL_PollEvent(&event)) {
+		respondToPlayersKeys(players, numPlayers, event);
+		switch(event.type) {
+			case SDL_QUIT:
+				//quit
 			break;
 		}
 	}

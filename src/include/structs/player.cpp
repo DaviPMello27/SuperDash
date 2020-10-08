@@ -26,22 +26,20 @@ Player::Player(Character* character, int x, int y, KeyCodes codes){
 	this->keys = {0, 0, 0, 0};
 	this->keyCodes = codes;
 	this->pos = {x, y};
-	this->size = {25, 50};
-	this->animation = {AnimationType::WALK, 0, 0, {animation.offset, 0, 24, 48}, {pos.x, pos.y, size.w, size.h}};
+	this->size = {35, 35};
+	this->animation = {AnimationType::PLAYER_WALK, 0, 0, 0, {animation.offset, 0, 16, 16}, {pos.x, pos.y, size.w, size.h}};
+	this->hitbox = {pos.x + size.w / 4, pos.y + size.w / 4, int(size.w * 0.75), int(size.h * 0.75)};
 	this->canJump = true;
 	this->canDash = true;
 	this->dashCooldown = 0;
-	this->health = 1;
-	this->team = 0;
 }
 
 void Player::kill(float killerSpeed, bool knockback){
 	state = State::DEFEATED;
-	bool hitFromBehind = (direction == Direction::LEFT && killerSpeed < 0) || (direction == Direction::RIGHT && killerSpeed > 0);
-	if (hitFromBehind) {
-		animation.type = AnimationType::DEATHBACK;
+	if (killerSpeed > 0) {
+		animation.type = AnimationType::PLAYER_DEATHLEFT;
 	} else {
-		animation.type = AnimationType::DEATHFRONT;
+		animation.type = AnimationType::PLAYER_DEATHRIGHT;
 	}
 	if(knockback){
 		speed.x = killerSpeed * 1.5f;
@@ -62,6 +60,8 @@ void Player::applyXSpeed(Map map, Decal* decals) {
 		collideLeft(map, decals);
 		collideRight(map, decals);
 	}
+	hitbox.x = pos.x + size.w / 8;
+	hitbox.y = pos.y + size.h / 8;
 }
 
 void Player::applyYSpeed(Map map, Decal* decals) {
@@ -76,6 +76,8 @@ void Player::applyYSpeed(Map map, Decal* decals) {
 		collideUp(map, decals);
 		collideDown(map, decals);
 	}
+	hitbox.x = pos.x + size.w / 8;
+	hitbox.y = pos.y + size.h / 8;
 }
 
 void Player::changeDirection() {
@@ -114,7 +116,7 @@ void Player::move(Map map, Decal* decals) {
 		if(state == State::WALKING){
 			pos.y--;
 			state = State::MIDAIR;
-			animation.type = AnimationType::JUMP;
+			animation.type = AnimationType::PLAYER_JUMP;
 		}
 		speed.y -= 4 + (0.4f * character->stat.jumpPower);
 		if(speed.y <= -(8 + (0.4f * character->stat.jumpPower))){ //jump limit
@@ -124,6 +126,18 @@ void Player::move(Map map, Decal* decals) {
 
 	//==========GRAVITY AND MIDAIR COLLISIONS==========//
 	if (state == State::MIDAIR || state == State::DEFEATED) {
+		//defeated
+		bool rotateClockWise = (animation.type == AnimationType::PLAYER_DEATHLEFT && speed.y != 0);
+		bool rotateCounterClockWise = (animation.type == AnimationType::PLAYER_DEATHRIGHT && speed.y != 0);
+		if(rotateClockWise){
+			this->animation.angle += 10;
+		} else if(rotateCounterClockWise){
+			this->animation.angle -= 10;
+		} else {
+			animation.angle = 0;
+		}
+
+		//jumping / falling
 		if (speed.y < 0 && !keys.up) {
 			speed.y += 0.5;
 		}
@@ -161,7 +175,7 @@ void Player::move(Map map, Decal* decals) {
 
 		if(bottomLeft == 97 && bottomRight == 97){
 			state = State::MIDAIR;
-			animation.type = AnimationType::JUMP;
+			animation.type = AnimationType::PLAYER_JUMP;
 		}
 	}
 	checkPacmanEffect(); //remove from both move() and dash()?
@@ -170,11 +184,10 @@ void Player::move(Map map, Decal* decals) {
 void Player::dash(Map map, Decal* decals) {
 	float maxSpeed = 4.0f + character->stat.dashSpeed;
 	if(!dashCooldown) {
-		animation.type = AnimationType::JUMP;
+		animation.type = AnimationType::PLAYER_JUMP;
 		state = State::MIDAIR;
 		canJump = false;
 		dashCooldown = (6 - character->stat.recoveryTime) * 30;
-		size.h = 50;
 		return;
 	}
 
@@ -218,16 +231,19 @@ void Player::control(Map map, Decal* decals) {
 		dash(map, decals);
 	}
 	switch(animation.type){
-		case AnimationType::WALK:
-			animation.walk((keys.right || keys.left), 168, 24); break;
-		case AnimationType::JUMP:
-			animation.jump(speed.y); break;
-		case AnimationType::DEATHBACK:
-			animation.death(speed.y, 96); break;
-		case AnimationType::DEATHFRONT:
-			animation.death(speed.y); break;
-		case AnimationType::DASH:
-			animation.dash(dashCooldown, 4.0 + character->stat.dashSpeed); break;
+		case AnimationType::PLAYER_WALK:
+			animation.walk((keys.right || keys.left), 144, 16); 
+			break;
+		case AnimationType::PLAYER_JUMP:
+			animation.jump(speed.y); 
+			break;
+		case AnimationType::PLAYER_DEATHLEFT:
+		case AnimationType::PLAYER_DEATHRIGHT:
+			animation.death(speed.y, (animation.type == AnimationType::PLAYER_DEATHLEFT));
+			break;
+		case AnimationType::PLAYER_DASH:
+			animation.dash(dashCooldown, 4.0 + character->stat.dashSpeed); 
+			break;
 	}
 }
 
@@ -239,39 +255,6 @@ void Player::collidePlayers(Player* players, Decal *decals) {
 			}
 		}
 	}
-}
-
-void Player::draw(SDL_Renderer* renderer){
-	double angle = 0;
-	int yOffset = 0;
-	int xOffset = 0;
-	if(animation.type == AnimationType::DASH){
-		switch(direction){
-			case Direction::RIGHT:
-				xOffset = -106;
-			break;
-			case Direction::UP:
-				xOffset = int(-size.w * 2.3);
-				yOffset = size.h;
-				angle = 270;
-			break;
-			case Direction::DOWN:
-				xOffset = int(-size.w * 2.3);
-				yOffset = -size.h;
-				angle = 90;
-			break;
-		}
-		animation.dst = {pos.x + xOffset, pos.y + yOffset, 144, size.h};
-	} else {
-		animation.dst = {pos.x, pos.y, size.w, size.h};
-	}
-	
-	if(direction == Direction::LEFT){
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, angle, {0}, SDL_FLIP_HORIZONTAL);
-	} else {
-		SDL_RenderCopyEx(renderer, character->sprite, &animation.src, &animation.dst, angle, {0}, SDL_FLIP_NONE);
-	}
-	animation.dst = {pos.x, pos.y, size.w, size.h};
 }
 
 void Player::respondToKey(SDL_Event event) {
@@ -290,8 +273,7 @@ void Player::respondToKey(SDL_Event event) {
 			} else if (key == keyCodes.dash && state != State::DASHING && !dashCooldown) {
 				if (keys.left || keys.up || keys.right || keys.down) {
 					dashCooldown = 50;
-					size.h = 38;
-					speed = { 0, 0 };
+					speed = {0, 0};
 					if (keys.left) {
 						direction = Direction::LEFT;
 					} else if (keys.right) {
@@ -301,14 +283,14 @@ void Player::respondToKey(SDL_Event event) {
 					} else if (keys.down) {
 						direction = Direction::DOWN;
 					}
-					animation.type = AnimationType::DASH;
+					animation.type = AnimationType::PLAYER_DASH;
 					animation.counter = 0;
 					state = State::DASHING;
 				}
 			}
 		} else if(key == SDLK_r){
 			state = State::WALKING;
-			animation.type = AnimationType::WALK;
+			animation.type = AnimationType::PLAYER_WALK;
 			animation.counter = 0;
 		}
 		break;

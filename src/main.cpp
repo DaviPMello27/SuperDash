@@ -13,32 +13,33 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include "SystemFunctions/SysFunc.h"
+#include "SystemFunctions/renderer.h"
 
-void drawDecals(SDL_Renderer* renderer, Decal* decals){
-	for(int i = 0; i < 4; i++){
-		if(decals[i].time){
-			decals[i].decrementTime();
-			decals[i].setOpacity(decals[i].time);
-			decals[i].draw(renderer);
-		}
-	}
+void applyPlayerBehavior(Player* players, Map map, Decal* decals, int numPlayers){
+	for(int i = 0; i < numPlayers; i++)
+		players[i].control(map, decals);
+	for(int i = 0; i < 2; i++)
+		players[i].collidePlayers(players, decals);
 }
 
 int main(){
 	Screen screen = setWindowSize(800, 600); //TODO: implement file reading
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_Window* mainWindow = createMainWindow(screen);
-	SDL_Renderer* renderer = createRenderer(mainWindow);
-	System system;
-	Character* olavo = new Character(1);
-	Character* wroth = new Character(2);
+	Renderer renderer = Renderer(createRenderer(mainWindow));
+	Character* char1 = new Character(1);
+	Character* char2 = new Character(2);
+	char1->loadSprite(renderer.get());
+	char2->loadSprite(renderer.get());
 	Map map;
-	SDL_Texture* frontalImpactSprite = IMG_LoadTexture(renderer, "assets/frontalImpact.png");
+	SDL_Texture* frontalImpactSprite = renderer.createTexture("assets/frontalImpact.png");
 
 
 	Player players[] = {
-		Player(wroth, 100, 400, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
-		Player(olavo, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_SLASH}),
+		Player(char2, 100, 300, {SDLK_a, SDLK_w, SDLK_d, SDLK_s, SDLK_SPACE}),
+		Player(char1, 600, 400, {SDLK_LEFT, SDLK_UP, SDLK_RIGHT, SDLK_DOWN, SDLK_SLASH}),
+		Player(char1, 300, 300, {SDLK_f, SDLK_t, SDLK_h, SDLK_g, SDLK_y}),
+		Player(char2, 700, 300, {SDLK_j, SDLK_i, SDLK_l, SDLK_k, SDLK_o}),
 	};
 
 	Decal frontalImpact[4] = {
@@ -50,39 +51,22 @@ int main(){
 
 	map.loadMap("map/map.txt");
 		
-	map.theme.tileSpriteSheet = IMG_LoadTexture(renderer, "assets/brick.png");
-	map.theme.background = IMG_LoadTexture(renderer, "assets/bg.png");
-	
-	olavo->sprite = IMG_LoadTexture(renderer, "assets/newOlavo.png");
-	wroth->sprite = IMG_LoadTexture(renderer, "assets/newWroth.png");
-	
-	while(system.running){
-		eventHandler(players, &system);
+	map.theme.tileSpriteSheet = renderer.createTexture("assets/brick.png");
+	map.theme.background = renderer.createTexture("assets/bg.png");
 		
-		SDL_SetRenderDrawColor(renderer, 128, 128, 150, 1);
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, map.theme.background, nullptr, nullptr);
+	while(true){
+		eventHandler(players, 2);
+		
+		renderer.drawMapBackground(map);
 
-		players[0].control(map, frontalImpact);
-		players[1].control(map, frontalImpact);
+		applyPlayerBehavior(players, map, frontalImpact, 2);
+		renderer.drawPlayers(players, 2);
+		
+		renderer.drawMapForeground(map);	
 
-		players[0].collidePlayers(players, frontalImpact);
-		players[1].collidePlayers(players, frontalImpact);
+		renderer.drawDecals(frontalImpact, 2);
 
-		//debug::printDirection(players[0]);
-		//debug::printDirection(players[1]);
-		//debug::printPos(players[0]);
-		//debug::printPos(players[1]);
-		//debug::drawHitbox(renderer, players[0]);
-		//debug::drawHitbox(renderer, players[1]);
-
-		players[0].draw(renderer);
-		players[1].draw(renderer);
-		map.build(renderer);
-	 
-		drawDecals(renderer, frontalImpact);
-
-		SDL_RenderPresent(renderer);
+		renderer.present();
 		SDL_Delay(1000/120);
 	}
 	return 0;
